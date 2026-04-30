@@ -11,7 +11,7 @@ function roundDecimal(number, decimals)
 end
 
 function ticksToMinutesSeconds(ticks)
-	seconds = math.floor(ticks / 60)
+	seconds = math.floor(ticks / 20)
 
 	local minutes = 0
 

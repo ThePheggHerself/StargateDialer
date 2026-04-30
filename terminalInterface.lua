@@ -162,17 +162,17 @@ function createConsoleTab(tabControl)
 	consoleTextBox = consoleTab:addTextBox({
 		x = 2,
 		y = 2,
-		width = 47,
+		width = 49,
 		height = 14,
 		editable = false,
 		background = colors.gray,
 		foreground = colors.white,
         text="Welcome to the BasaltDialer Terminal"
-	}):setSize(47, 14)
+	}):setSize(49, 15)
 	consoleInput = consoleTab:addInput({
 		x = 2,
-		y = 16,
-		width = 47,
+		y = 17,
+		width = 49,
 		height = 1,
 		background = colors.magenta,
 		foreground = colors.white,
@@ -182,13 +182,11 @@ end
 function createInterface(basalt)
 	local main = basalt.createFrame()
 
-	main:setBackground(colors.orange)
-
 	local tabControl = main:addTabControl({
-		x = 2,
+		x = 1,
 		y = 1,
-		width = 49,
-		height = 18,
+		width = 51,
+		height = 19,
 		background = colors.black,
 	})
 

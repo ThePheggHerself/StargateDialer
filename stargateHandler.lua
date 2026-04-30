@@ -40,7 +40,7 @@ GateFeedbackCodes = {
 	[-20] = "WHITELISTED_SELF",
 	[-21] = "BLACKLISTED_TARGET",
 	[-22] = "BLACKLISTED_SELF",
-	[-23] = "EXCEEDED_CONNECTION_TIME",
+	[-23] = "Connection time exceeded",
 	[-24] = "RAN_OUT_OF_POWER",
 	[-25] = "CONNECTION_REROUTED",
 	[-26] = "WRONG_DISCONNECT_SIDE",
@@ -68,7 +68,7 @@ FilterType = {
 	[1] = "Whitelist",
 }
 
-local activeAddress = { id = "unknown", display = "Unknown", address = "" }
+local activeAddress = { display = "", address = "" }
 local warning = ""
 
 function listenStargateChevronEngaged() -- "stargate_chevron_engaged"
@@ -81,8 +81,7 @@ function listenStargateChevronEngaged() -- "stargate_chevron_engaged"
 			warning = "Offworld Activation!"
 
 			toggleIris(false)
-			Helpers.log("AAAA")
-			Helpers.toggleRelays(true) -- Toggle alarms and sirens
+			toggleRelays(true) -- Toggle alarms and sirens
 		end
 
 		chevronText = "Encoded"
@@ -135,7 +134,7 @@ function listenStargateIncomingWormhole() -- "stargate_incoming_wormhole"
 			end
 
 			if not address.sirens then
-				Helpers.toggleRelays(false)
+				toggleRelays(false)
 			end
 		end
 	end
@@ -162,10 +161,10 @@ function listenStargateReset() -- "stargate_reset"
 		local name, periphName, feedback, feedbackDescription = os.pullEvent("stargate_reset")
 
 		Helpers.log(string.format("Reset: %s", GateFeedbackCodes[feedback]))
-		activeAddress = { id = "unknown", display = "Unknown", address = "" }
+		activeAddress = { display = "Not Connected", address = "" }
 		warning = ""
 
-		Helpers.toggleRelays(false)
+		toggleRelays(false)
 
 		chevronTable = {
 			[1] = "idle",
@@ -252,19 +251,23 @@ function dataUpdater()
 				interfaceEnergyCapacity = stargate.getEnergyCapacity(),
 				generation = stargate.getStargateGeneration(),
 				interface = peripheral.getName(stargate),
-				feedbackCode = stargate.getRecentFeedback()
+				feedbackCode = stargate.getRecentFeedback(),
 			}
 
 			local advanced = {
-				available = false
+				available = false,
 			}
 
 			if isAdvancedInterface(peripheral.getName(stargate)) then
 				advanced = {
 					available = true,
 					localAddress = stargate.addressToString(stargate.getLocalAddress()),
-					network = stargate.getNetwork()
+					network = stargate.getNetwork(),
 				}
+			end
+
+			if stargate.isStargateDialingOut() or advanced.available then
+				activeAddress = AddressBook.getAddressFromIDOrAddress(stargate.addressToString(stargate.getConnectedAddress()))
 			end
 
 			os.queueEvent("data_update", {
@@ -273,7 +276,7 @@ function dataUpdater()
 				warning = warning,
 				iris = irisStatus(),
 				basic = basic,
-				advanced = advanced				
+				advanced = advanced,
 			})
 		end
 	end
@@ -295,7 +298,6 @@ function listenRequestLockdown()
 	end
 end
 
-
 function toggleRelays(state)
 	local Relay = { peripheral.find("redstone_relay") }
 
@@ -310,7 +312,6 @@ function toggleRelays(state)
 		end
 	end
 end
-
 
 cancelDial = false
 function shouldAbortDial()
@@ -346,8 +347,7 @@ function requestAddress(input, fastDial, addPoO)
 		Helpers.log(address.security.sirens)
 
 		if address.id == nil or address.security.sirens then
-			Helpers.log("AAA")
-			Helpers.toggleRelays(true)
+			toggleRelays(true)
 		end
 
 		if addPoO then
@@ -427,7 +427,6 @@ function dialStargate(addArr, isFast)
 		index = index + 1
 	end
 end
-
 
 -- https://github.com/Ktlo/pocket-stargate/blob/master/distributions/sgs/main.lua#L447
 function getRotationDirection(current, symbol)

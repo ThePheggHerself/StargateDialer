@@ -21,8 +21,6 @@ function getAddressFromAddress(addrStr)
 	else
 		newAddrStr = addrStr:sub(1, -3)
 
-		Helpers.log(newAddrStr)
-
 		for name, address in pairs(addressTable) do
 			if address.address == newAddrStr then
 				return address
@@ -33,28 +31,28 @@ function getAddressFromAddress(addrStr)
 	end
 end
 
-function getAddressFromID(addrStr)	
+function getAddressFromID(addrStr)
 	if addrStr == nil then
 		return nil
 	else
-        return addressTable[addrStr] 
+		return addressTable[addrStr]
 	end
 end
 
 function getAddressFromIDOrAddress(addrStr)
-    address = getAddressFromID(addrStr)
+	address = getAddressFromID(addrStr)
 
-    if address then
-        return address
-    else
-        address = getAddressFromAddress(addrStr)
+	if address then
+		return address
+	else
+		address = getAddressFromAddress(addrStr)
 
-        if address then 
-            return address
-        else
-            return convertStringToAddress(addrStr)
-        end
-    end
+		if address then
+			return address
+		else
+			return convertStringToAddress(addrStr)
+		end
+	end
 end
 
 function getAddressBook()
@@ -62,14 +60,21 @@ function getAddressBook()
 end
 
 function convertStringToAddress(addrString)
-	return {
-		address = addrString,
-		display = "Unknown",
-		security = {
-			irisAutoOpen = false,
-			sirens = true
+	if addrString == "" or addrString == "-" then	
+		return {
+			display = "Not Connected",
+			address = ""
 		}
-	}
+	else
+		return {
+			address = addrString,
+			display = "Unknown",
+			security = {
+				irisAutoOpen = false,
+				sirens = true,
+			},
+		}
+	end
 end
 
 function stringToTable(input)
@@ -93,14 +98,10 @@ function removeAddress(id)
 	Helpers.writeTableToFile("addresses.conf", addressTable)
 end
 
-
-
-
-
 return {
 	getAddressFromIDOrAddress = getAddressFromIDOrAddress,
 	getAddressBook = getAddressBook,
 	stringToTable = stringToTable,
 	addAddress = addAddress,
-	removeAddress = removeAddress
+	removeAddress = removeAddress,
 }
