@@ -63,7 +63,11 @@ function convertStringToAddress(addrString)
 	if addrString == "" or addrString == "-" then	
 		return {
 			display = "Not Connected",
-			address = ""
+			address = "",
+			security = {
+				irisAutoOpen = false,
+				sirens = true,
+			},
 		}
 	else
 		return {
@@ -89,13 +93,13 @@ end
 
 function addAddress(id, address)
 	addressTable[id] = address
-	Helpers.writeTableToFile("addresses.conf", addressTable)
+	writeTableToFile("addresses.conf", addressTable)
 end
 
 function removeAddress(id)
 	addressTable[id] = nil
 
-	Helpers.writeTableToFile("addresses.conf", addressTable)
+	writeTableToFile("addresses.conf", addressTable)
 end
 
 return {

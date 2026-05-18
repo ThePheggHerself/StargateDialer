@@ -245,7 +245,7 @@ function listenBasaltDataUpdate() -- "data_update"
 
 		--Debug Tab
 		gateGenLabel:setText("Generation: " .. GateGeneration[data.basic.generation])
-		interfaceLabel:setText(data.basic.interface:sub(1, -2))
+		interfaceLabel:setText(data.basic.interface:sub(1, -3))
 
 		if data.advanced.available then
 			localAddressLabel:setText(data.advanced.localAddress)

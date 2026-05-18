@@ -100,29 +100,23 @@ function listenStargateIncomingWormhole() -- "stargate_incoming_wormhole"
 		local name, periphName, addressTable = os.pullEvent("stargate_incoming_wormhole")
 
 		Helpers.log("Incoming wormhole Formed")
-		address = nil
 
-		if isAdvancedInterface(periphName) then
-			addrStr = stargate.addressToString(addressTable)
-			address = AddressBook.getAddressFromIDOrAddress(addrStr)
+		local addrStr = stargate.addressToString(addressTable)
+		local address = AddressBook.getAddressFromIDOrAddress(addrStr)
 
-			if address.id then
-				Helpers.log(string.format("Origin: %s (%s)", address.address, address.display))
-				activeAddress = address
-			else
-				Helpers.log(string.format("Origin: %s (Unknown)", addrStr))
-				activeAddress = { id = "unknown", display = "Unknown", address = addrStr }
-			end
+		if address.id then
+			Helpers.log(string.format("Origin: %s (%s)", address.address, address.display))
+			activeAddress = address
 		else
-			Helpers.log("Unknown Origin (Incompatible Hardware)")
-			activeAddress = { id = "unknown", display = "Unknown", address = "" }
+			Helpers.log(string.format("Origin: %s (Unknown)", addrStr))
+			activeAddress = { id = "unknown", display = "Unknown", address = addrStr }
 		end
 
 		if stargate.getIris() and stargate.getIrisProgressPercentage() > 99 then
-			--stargate.sendStargateMessage({type="msg", content="Iris closed! Identification Required"}) -- Send through the gate to the other side, if possible
+			stargate.sendStargateMessage(textutils.serialize({type="msg", content="Iris closed! Identification Required"})) -- Send through the gate to the other side, if possible
 		end
 
-		if address ~= nil then
+		if address then
 			while not stargate.isWormholeOpen() do
 				sleep(0.5)
 			end
@@ -130,7 +124,7 @@ function listenStargateIncomingWormhole() -- "stargate_incoming_wormhole"
 			if address.security.irisAutoOpen then
 				toggleIris(true)
 
-				--stargate.sendStargateMessage("Iris is now open")
+				stargate.sendStargateMessage(textutils.serialize({type="msg", content="Iris is now open"}))
 			end
 
 			if not address.sirens then
@@ -224,13 +218,15 @@ function listenTransmissionRecieved()
 		Helpers.log(string.format("[GDO] IDC %s recieved on frequency %s", code, freq))
 
 		if matches then
-			Helpers.log(string.format("[GDO] Valid IDC"), code, freq)
-			toggleIris(true)
+			if stargate.isWormholeOpen() then
+				toggleIris(true)
+				Helpers.log("[GDO] Valid IDC")
+			else
+				Helpers.log("[GDO] Valid IDC but unsafe request")
+			end
 		else
-			Helpers.log(string.format("[GDO] Invalid IDC"), code, freq)
+			Helpers.log("[GDO] Invalid IDC")
 		end
-
-		os.queueEvent("basalt_command", msg)
 	end
 end
 
@@ -266,8 +262,9 @@ function dataUpdater()
 				}
 			end
 
-			if stargate.isStargateDialingOut() or advanced.available then
-				activeAddress = AddressBook.getAddressFromIDOrAddress(stargate.addressToString(stargate.getConnectedAddress()))
+			if stargate.isStargateConnected() and advanced.available then
+				activeAddress =
+					AddressBook.getAddressFromIDOrAddress(stargate.addressToString(stargate.getConnectedAddress()))
 			end
 
 			os.queueEvent("data_update", {
@@ -294,9 +291,22 @@ function listenRequestLockdown()
 	while true do
 		local name, state = os.pullEvent("request_lockdown")
 
-		toggleRelays(state)
+		local Relay = { peripheral.find("redstone_relay") }
+
+		if Relay then
+			for _, relay in pairs(Relay) do
+				relay.setOutput("top", state)
+				relay.setOutput("bottom", state)
+				relay.setOutput("front", state)
+				relay.setOutput("back", state)
+				relay.setOutput("left", state)
+				relay.setOutput("right", state)
+			end
+		end
 	end
 end
+
+
 
 function toggleRelays(state)
 	local Relay = { peripheral.find("redstone_relay") }
@@ -503,16 +513,13 @@ function toggleIris(state)
 			if stargate.getIrisProgressPercentage() > 0 then
 				stargate.openIris()
 
-				local function waitForIrisOpen()
-					while SGHandler.stargate.getIrisProgressPercentage() > 0 do
-						sleep(0.5)
-					end
-					Helpers.log("Iris Opened")
+				Helpers.log("Opening Iris")
+
+				while SGHandler.stargate.getIrisProgressPercentage() > 0 do
+					sleep(0.5)
 				end
 
-				parallel.waitForAny(waitForIrisOpen, function()
-					Helpers.log("Opening Iris")
-				end)
+				Helpers.log("Iris Opened")
 			else
 				Helpers.log("Iris already open")
 			end
@@ -520,16 +527,12 @@ function toggleIris(state)
 			if stargate.getIrisProgressPercentage() < 100 then
 				stargate.closeIris()
 
-				local function waitForIrisClose()
-					while SGHandler.stargate.getIrisProgressPercentage() < 100 do
-						sleep(0.5)
-					end
-					Helpers.log("Iris closed")
-				end
+				Helpers.log("Closing Iris")
 
-				parallel.waitForAny(waitForIrisClose, function()
-					Helpers.log("Closing Iris")
-				end)
+				while SGHandler.stargate.getIrisProgressPercentage() < 100 do
+					sleep(0.5)
+				end
+				Helpers.log("Iris closed")
 			else
 				Helpers.log("Iris already closed")
 			end
