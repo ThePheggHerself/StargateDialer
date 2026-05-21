@@ -334,7 +334,6 @@ function updateGateData() -- "data_update"
 		end
 
 		for i, state in pairs(data.chevrons) do
-			Helpers.log(i .. " " .. state)
 			chevronTable:updateCell(i, 2, state)
 		end
 	end
