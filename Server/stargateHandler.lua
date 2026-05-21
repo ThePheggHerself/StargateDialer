@@ -3,73 +3,20 @@ local stargate = peripheral.find("advanced_crystal_interface")
 	or peripheral.find("basic_interface")
 local transceiver = peripheral.find("transceiver")
 
-GateFeedbackCodes = {
-	[0] = "NONE",
-	[1] = "Symbol Encoded",
-	[2] = "Systemwide Connection Made",
-	[3] = "Interstellar Connection Made",
-	[4] = "Intergalactic Connection Made",
-	[5] = "TRANSPORT_SUCCESSFUL",
-	[6] = "ENTITY_DESTROYED",
-	[7] = "Stargate Disconnected",
-	[8] = "CONNECTION_ENDED.POINT_OF_ORIGIN",
-	[9] = "CONNECTION_ENDED.STARGATE_NETWORK",
-	[10] = "Connection Autoclosed",
-	[11] = "Chevron Opened",
-	[12] = "Rotating",
-	[13] = "Rotation Stopped",
-	[-1] = "UNKNOWN",
-	[-2] = "SYMBOL_IN_ADDRESS",
-	[-3] = "SYMBOL_OUT_OF_BOUNDS",
-	[-4] = "ENCODE_WHEN_CONNECTED",
-	[-5] = "INCOMPLETE_ADDRESS",
-	[-6] = "Invalid Address",
-	[-7] = "Insufficient Power",
-	[-8] = "SELF_OBSTRUCTED",
-	[-9] = "TARGET_OBSTRUCTED",
-	[-10] = "SELF_DIAL",
-	[-11] = "SAME_SYSTEM_DIAL",
-	[-12] = "ALREADY_CONNECTED",
-	[-13] = "NO_GALAXY",
-	[-14] = "NO_DIMENSIONS",
-	[-15] = "NO_STARGATES",
-	[-16] = "TARGET_RESTRICTED",
-	[-17] = "INVALID_8_CHEVRON_ADDRESS",
-	[-18] = "INVALID_SYSTEM_WIDE_CONNECTION",
-	[-19] = "WHITELISTED_TARGET",
-	[-20] = "WHITELISTED_SELF",
-	[-21] = "BLACKLISTED_TARGET",
-	[-22] = "BLACKLISTED_SELF",
-	[-23] = "Connection time exceeded",
-	[-24] = "RAN_OUT_OF_POWER",
-	[-25] = "CONNECTION_REROUTED",
-	[-26] = "WRONG_DISCONNECT_SIDE",
-	[-27] = "CONNECTION_FORMING",
-	[-28] = "STARGATE_DESTROYED",
-	[-29] = "COULD_NOT_REACH_TARGET_STARGATE",
-	[-30] = "INTERRUPTED_BY_INCOMING_CONNECTION",
-	[-31] = "ROTATION_BLOCKED",
-	[-32] = "NOT_ROTATING",
-	[-33] = "CHEVRON_ALREADY_OPENED",
-	[-34] = "CHEVRON_ALREADY_CLOSED",
-	[-35] = "CHEVRON_NOT_OPEN",
-	[-36] = "CANNOT_ENCODE_POINT_OF_ORIGIN",
-}
-GateGeneration = {
-	[0] = "Classic",
-	[1] = "Universe",
-	[2] = "Milky Way",
-	[3] = "Pegasus",
-	[-1] = "Unknown",
-}
-FilterType = {
-	[-1] = "Blacklist",
-	[0] = "None",
-	[1] = "Whitelist",
-}
-
 local activeAddress = { display = "", address = "" }
 local warning = ""
+
+local chevronTable = {
+	[1] = "idle",
+	[2] = "idle",
+	[3] = "idle",
+	[4] = "idle",
+	[5] = "idle",
+	[6] = "idle",
+	[7] = "idle",
+	[8] = "idle",
+	[9] = "idle",
+}
 
 function listenStargateChevronEngaged() -- "stargate_chevron_engaged"
 	while true do
@@ -77,11 +24,11 @@ function listenStargateChevronEngaged() -- "stargate_chevron_engaged"
 			os.pullEvent("stargate_chevron_engaged")
 
 		if incomingConnection and engagedChevron == 1 then -- Start of an incoming connection
-			Helpers.log("WARNING! Incoming Connection!")
+			print("WARNING! Incoming Connection!")
 			warning = "Offworld Activation!"
 
 			toggleIris(false)
-			toggleRelays(true) -- Toggle alarms and sirens
+			--toggleRelays(true) -- Toggle alarms and sirens
 		end
 
 		chevronText = "Encoded"
@@ -90,8 +37,8 @@ function listenStargateChevronEngaged() -- "stargate_chevron_engaged"
 			chevronText = "Encoded (" .. encodedSymbol .. ")"
 		end
 
-		os.queueEvent("basalt_chevron_update", { [engagedChevron + 1] = chevronText })
-		Helpers.log(string.format("Chevron %s %s", engagedChevron, chevronText))
+		chevronTable[engagedChevron + 1] =  chevronText
+		print(string.format("Chevron %s %s", engagedChevron, chevronText))
 	end
 end
 
@@ -99,16 +46,16 @@ function listenStargateIncomingWormhole() -- "stargate_incoming_wormhole"
 	while true do
 		local name, periphName, addressTable = os.pullEvent("stargate_incoming_wormhole")
 
-		Helpers.log("Incoming wormhole Formed")
+		print("Incoming wormhole Formed")
 
 		local addrStr = stargate.addressToString(addressTable)
 		local address = AddressBook.getAddressFromIDOrAddress(addrStr)
 
 		if address.id then
-			Helpers.log(string.format("Origin: %s (%s)", address.address, address.display))
+			print(string.format("Origin: %s (%s)", address.address, address.display))
 			activeAddress = address
 		else
-			Helpers.log(string.format("Origin: %s (Unknown)", addrStr))
+			print(string.format("Origin: %s (Unknown)", addrStr))
 			activeAddress = { id = "unknown", display = "Unknown", address = addrStr }
 		end
 
@@ -128,7 +75,7 @@ function listenStargateIncomingWormhole() -- "stargate_incoming_wormhole"
 			end
 
 			if not address.sirens then
-				toggleRelays(false)
+				--toggleRelays(false)
 			end
 		end
 	end
@@ -138,7 +85,7 @@ function listenStargateOutgoingWormhole() -- "stargate_outgoing_wormhole"
 	while true do
 		local name, periphName, address = os.pullEvent("stargate_outgoing_wormhole")
 
-		Helpers.log("Outgoing wormhole Formed")
+		print("Outgoing wormhole Formed")
 		--Helpers.toggleRelays(true)
 	end
 end
@@ -146,7 +93,7 @@ end
 function listenStargateDisconnected() -- "stargate_disconnected"
 	while true do
 		local name, periphName, feedback, feedbackDescription = os.pullEvent("stargate_disconnected")
-		Helpers.log(string.format("Disconnected: %s", GateFeedbackCodes[feedback]))
+		print(string.format("Disconnected: %s", feedback))
 	end
 end
 
@@ -154,11 +101,11 @@ function listenStargateReset() -- "stargate_reset"
 	while true do
 		local name, periphName, feedback, feedbackDescription = os.pullEvent("stargate_reset")
 
-		Helpers.log(string.format("Reset: %s", GateFeedbackCodes[feedback]))
+		print(string.format("Reset: %s", feedback))
 		activeAddress = { display = "Not Connected", address = "" }
 		warning = ""
 
-		toggleRelays(false)
+		--toggleRelays(false)
 
 		chevronTable = {
 			[1] = "idle",
@@ -171,8 +118,6 @@ function listenStargateReset() -- "stargate_reset"
 			[8] = "idle",
 			[9] = "idle",
 		}
-
-		os.queueEvent("basalt_chevron_update", chevronTable)
 	end
 end
 
@@ -181,10 +126,10 @@ function listenStargateDeconstructEntity() -- "stargate_deconstructing_entity"
 		local name, periphName, entityType, entityName, entityUUID, destroyed =
 			os.pullEvent("stargate_deconstructing_entity")
 		if destroyed then
-			Helpers.log("Caution: Entity destroyed by entering incoming wormhole")
-			Helpers.log("Entity: %s (%s)")
+			print("Caution: Entity destroyed by entering incoming wormhole")
+			print("Entity: %s (%s)")
 		else
-			Helpers.log(string.format("Entity entered wormhole: %s (%s)", entityName, entityType))
+			print(string.format("Entity entered wormhole: %s (%s)", entityName, entityType))
 		end
 	end
 end
@@ -192,7 +137,7 @@ end
 function listenStargateReconstructEntity() -- "stargate_reconstructing_entity"
 	while true do
 		local name, periphName, entityType, entityName, entityUUID = os.pullEvent("stargate_reconstructing_entity")
-		Helpers.log(string.format("Reconstructed entity: %s (%s)", entityName, entityUUID))
+		print(string.format("Reconstructed entity: %s (%s)", entityName, entityUUID))
 	end
 end
 
@@ -215,17 +160,17 @@ function listenTransmissionRecieved()
 	while true do
 		local name, periphName, freq, code, matches = os.pullEvent("transceiver_transmission_received")
 
-		Helpers.log(string.format("[GDO] IDC %s recieved on frequency %s", code, freq))
+		print(string.format("[GDO] IDC %s recieved on frequency %s", code, freq))
 
 		if matches then
 			if stargate.isWormholeOpen() then
 				toggleIris(true)
-				Helpers.log("[GDO] Valid IDC")
+				print("[GDO] Valid IDC")
 			else
-				Helpers.log("[GDO] Valid IDC but unsafe request")
+				print("[GDO] Valid IDC but unsafe request")
 			end
 		else
-			Helpers.log("[GDO] Invalid IDC")
+			print("[GDO] Invalid IDC")
 		end
 	end
 end
@@ -277,6 +222,7 @@ function dataUpdater()
 				activeAddress = activeAddress,
 				status = stargateStatus(),
 				warning = warning,
+				chevrons = chevronTable,
 				iris = iris,
 				basic = basic,
 				advanced = advanced,
@@ -285,58 +231,14 @@ function dataUpdater()
 	end
 end
 
-function listenRequestDial()
-	while true do
-		local name, address, fastDial, addPoO = os.pullEvent("request_address")
-
-		requestAddress(address, fastDial, addPoO)
-	end
-end
-
-function listenRequestLockdown()
-	while true do
-		local name, state = os.pullEvent("request_lockdown")
-
-		local Relay = { peripheral.find("redstone_relay") }
-
-		if Relay then
-			for _, relay in pairs(Relay) do
-				relay.setOutput("top", state)
-				relay.setOutput("bottom", state)
-				relay.setOutput("front", state)
-				relay.setOutput("back", state)
-				relay.setOutput("left", state)
-				relay.setOutput("right", state)
-			end
-		end
-	end
-end
-
-
-
-function toggleRelays(state)
-	local Relay = { peripheral.find("redstone_relay") }
-
-	if Relay then
-		for _, relay in pairs(Relay) do
-			relay.setOutput("top", state)
-			relay.setOutput("bottom", state)
-			relay.setOutput("front", state)
-			relay.setOutput("back", state)
-			relay.setOutput("left", state)
-			relay.setOutput("right", state)
-		end
-	end
-end
-
 cancelDial = false
 function shouldAbortDial()
 	if stargate.getRecentFeedback() == -30 then
-		Helpers.log("Dialing sequence aborted due to incoming connection")
+		print("Dialing sequence aborted due to incoming connection")
 		return true
 	elseif cancelDial then
 		stargate.disconnectStargate()
-		Helpers.log("Dialing sequence aborted")
+		print("Dialing sequence aborted")
 		cancelDial = false
 		return true
 	end
@@ -348,45 +250,16 @@ function abortOrDisconnect()
 		stargate.disconnectStargate()
 	elseif stargate.getChevronsEngaged() > 0 then
 		cancelDial = true
+		print("Dial aborted")
 	else
-		Helpers.log("Stargate is not dialing or connected")
+		print("Stargate is not dialing or connected")
 	end
 end
 
-function requestAddress(input, fastDial, addPoO)
-	if stargate.isWormholeOpen() or stargate.isStargateDialingOut() or stargate.getChevronsEngaged() > 0 then
-		Helpers.log("ERR: Stargate Active")
-	else
-		local addrTable = {}
-		address = AddressBook.getAddressFromIDOrAddress(input)
-
-		if address.security.restricted then
-			Helpers.log("Access to this address is restricted.\nDialing sequence aborted")
-			return
-		end
-
-		Helpers.log(string.format("Dialing Stargate for: %s", address.display))
-		Helpers.log(string.format("Address: %s", address.address))
-		addrTable = AddressBook.stringToTable(address.address)
-		activeAddress = address
-
-		if address.id == nil or address.security.sirens then
-			toggleRelays(true)
-		end
-
-		if addPoO then
-			table.insert(addrTable, 0)
-		end
-
-		if #addrTable == 8 then
-			Helpers.log("Increasing Energy Target")
-
-			setGateEnergyTarget(100000000000)
-		else
-			setGateEnergyTarget(200000)
-		end
-
-		dialStargate(addrTable, fastDial)
+function listenDialStargate()
+	while true do
+		local event, address, isFast = os.pullEvent("dial_stargate")
+		dialStargate(address, isFast)
 	end
 end
 
@@ -403,7 +276,7 @@ function dialStargate(addArr, isFast)
 
 	for _, symbol in pairs(addArr) do
 		if shouldAbortDial() then
-			Helpers.log("Dial sequence aborted")
+			print("Dial sequence aborted")
 			stargate.disconnectStargate()
 			break
 		end
@@ -426,7 +299,7 @@ function dialStargate(addArr, isFast)
 				end
 
 				if shouldAbortDial() then
-					Helpers.log("Dial sequence aborted")
+					print("Dial sequence aborted")
 					stargate.disconnectStargate()
 					break
 				end
@@ -527,28 +400,28 @@ function toggleIris(state)
 			if stargate.getIrisProgressPercentage() > 0 then
 				stargate.openIris()
 
-				Helpers.log("Opening Iris")
+				print("Opening Iris")
 
 				while SGHandler.stargate.getIrisProgressPercentage() > 0 do
 					sleep(0.5)
 				end
 
-				Helpers.log("Iris Opened")
+				print("Iris Opened")
 			else
-				Helpers.log("Iris already open")
+				print("Iris already open")
 			end
 		else
 			if stargate.getIrisProgressPercentage() < 100 then
 				stargate.closeIris()
 
-				Helpers.log("Closing Iris")
+				print("Closing Iris")
 
 				while SGHandler.stargate.getIrisProgressPercentage() < 100 do
 					sleep(0.5)
 				end
-				Helpers.log("Iris closed")
+				print("Iris closed")
 			else
-				Helpers.log("Iris already closed")
+				print("Iris already closed")
 			end
 		end
 	end
@@ -556,7 +429,7 @@ end
 
 -- Updates the Stargate's energy target
 function setGateEnergyTarget(value)
-	Helpers.log("Changing energy target to " .. convertToPowerUnits(value))
+	print("Changing energy target to " .. convertToPowerUnits(value))
 
 	stargate.setEnergyTarget(value)
 end
@@ -592,9 +465,13 @@ function runListeners()
 		listenStargateReconstructEntity,
 		listenStargateMessageRecieved,
 		listenTransmissionRecieved,
-		listenRequestDial,
-		listenRequestLockdown,
-		dataUpdater
+		listenDialStargate,
+		dataUpdater,
+		
+
+		Wireless.listenModemMessage,
+		Wireless.listenDataUpdate,
+		ServerCore.listenRequestCommand
 	)
 end
 
@@ -603,7 +480,6 @@ return {
 	stargate = stargate,
 	runListeners = runListeners,
 
-	requestAddress = requestAddress,
 	dialStargate = dialStargate,
 	isRotatingStargate = isRotatingStargate,
 	stargateStatus = stargateStatus,

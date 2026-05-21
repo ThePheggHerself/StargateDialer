@@ -116,12 +116,10 @@ function createDialTab(tabControl, addressBook)
 	local localList = addressTab:newTab("7-Chevron")
 	local galacticList = addressTab:newTab("8-Chevron")
 	local directList = addressTab:newTab("9-Chevron")
-	local otherList = addressTab:newTab("Invalid")
 	
 	local localPos = {x = 2, y = 2}
 	local galacticPos = {x = 2, y = 2}
 	local directPos = {x = 2, y = 2}
-	local otherPos = {x = 2, y = 2}
 
 	for i, addr in pairs(addressBook) do
 		local addressTable = AddressBook.stringToTable(addr.address)
@@ -132,7 +130,7 @@ function createDialTab(tabControl, addressBook)
 				color = colors.red
 			end
 
-			if #addressTable == 6 then -- 7-Chevron addresses
+			if #addressTable == 7 then -- 7-Chevron addresses
 				localList:addButton({
 					x = localPos.x,
 					y = localPos.y,
@@ -144,9 +142,9 @@ function createDialTab(tabControl, addressBook)
 				})
 				:onClick(function()
 					if fastDial.checked then
-						os.queueEvent("basalt_command", "fdial " .. addr.id)
+						os.queueEvent("basalt_command", "fdial " .. addr.address)
 					else
-						os.queueEvent("basalt_command", "dial " .. addr.id)
+						os.queueEvent("basalt_command", "dial " .. addr.address)
 					end
 				end)
 
@@ -156,7 +154,7 @@ function createDialTab(tabControl, addressBook)
 					localPos.x = 2
 					localPos.y = localPos.y + 1
 				end
-			elseif #addressTable == 7 then -- 8-Chevron addresses
+			elseif #addressTable == 8 then -- 8-Chevron addresses
 				galacticList:addButton({
 					x = galacticPos.x,
 					y = galacticPos.y,
@@ -168,9 +166,9 @@ function createDialTab(tabControl, addressBook)
 				})
 				:onClick(function()
 					if fastDial.checked then
-						os.queueEvent("basalt_command", "fdial " .. addr.id)
+						os.queueEvent("basalt_command", "fdial " .. addr.address)
 					else
-						os.queueEvent("basalt_command", "dial " .. addr.id)
+						os.queueEvent("basalt_command", "dial " .. addr.address)
 					end
 				end)
 
@@ -180,7 +178,7 @@ function createDialTab(tabControl, addressBook)
 					galacticPos.x = 2
 					galacticPos.y = galacticPos.y + 1
 				end
-			elseif #addressTable == 8 then -- 9-Chevron Addresses
+			elseif #addressTable == 9 then -- 9-Chevron Addresses
 				directList:addButton({
 					x = directPos.x,
 					y = directPos.y,
@@ -192,9 +190,9 @@ function createDialTab(tabControl, addressBook)
 				})
 				:onClick(function()
 					if fastDial.checked then
-						os.queueEvent("basalt_command", "fdial " .. addr.id)
+						os.queueEvent("basalt_command", "fdial " .. addr.address)
 					else
-						os.queueEvent("basalt_command", "dial " .. addr.id)
+						os.queueEvent("basalt_command", "dial " .. addr.address)
 					end
 				end)
 
@@ -203,30 +201,6 @@ function createDialTab(tabControl, addressBook)
 				else
 					directPos.x = 2
 					directPos.y = directPos.y + 1
-				end
-			else -- Basically anything else
-				otherList:addButton({
-					x = otherPos.x,
-					y = otherPos.y,
-					width = 15,
-					height = 1,
-					text = addr.display,
-					foreground = colors.white,
-					background = color
-				})
-				:onClick(function()
-					if fastDial.checked then
-						os.queueEvent("basalt_command", "fdial " .. addr.id)
-					else
-						os.queueEvent("basalt_command", "dial " .. addr.id)
-					end
-				end)
-
-				if otherPos.x == 2 then
-					otherPos.x = 19
-				else
-					otherPos.x = 2
-					otherPos.y = otherPos.y + 1
 				end
 			end
 		end
@@ -358,6 +332,11 @@ function updateGateData() -- "data_update"
 			localAddressLabel:setText("Unavailable")
 			networkLabel:setText("Network: Unavailable")
 		end
+
+		for i, state in pairs(data.chevrons) do
+			Helpers.log(i .. " " .. state)
+			chevronTable:updateCell(i, 2, state)
+		end
 	end
 end
 
@@ -399,4 +378,5 @@ end
 
 return {
 	createInterface = createInterface,
+	updateGateData = updateGateData
 }

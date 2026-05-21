@@ -103,12 +103,14 @@ function createDialTab(main, addressBook)
             }
 
             local buttonFunction = function()
+				print("BBBB")
+
                 Wireless.transmitMessage({
                     type = "cmd",
                     content =  isFastDial() .. " " .. addr.address
                 })
             end
-			if #addressTable == 6 then -- 7-Chevron addresses
+			if #addressTable == 7 then -- 7-Chevron addresses
                 buttonProperties.x = localPos.x
                 buttonProperties.y = localPos.y
 
@@ -121,7 +123,7 @@ function createDialTab(main, addressBook)
 
 				localList:addButton(buttonProperties)
 				    :onClick(buttonFunction)			
-			elseif #addressTable == 7 then -- 8-Chevron addresses
+			elseif #addressTable == 8 then -- 8-Chevron addresses
                 buttonProperties.x = galacticPos.x
                 buttonProperties.y = galacticPos.y
 
@@ -134,7 +136,7 @@ function createDialTab(main, addressBook)
 
 				galacticList:addButton(buttonProperties)
 				    :onClick(buttonFunction)
-			elseif #addressTable == 8 then -- 9-Chevron Addresses
+			elseif #addressTable == 9 then -- 9-Chevron Addresses
                 buttonProperties.x = directPos.x
                 buttonProperties.y = directPos.y
 
@@ -210,8 +212,6 @@ function createInterface(basalt)
 
     local main = basalt.createFrame()
 	main:setBackground(colors.gray)
-
-
 
 	createDialTab(main, AddressBook.getAddressBook())
 end

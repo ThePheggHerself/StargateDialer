@@ -100,6 +100,23 @@ function removeAddress(id)
 	writeTableToFile("addresses.conf", addressTable)
 end
 
+function requestAddress(input, fastDial, addPoO)
+	if stargate.isWormholeOpen() or stargate.isStargateDialingOut() or stargate.getChevronsEngaged() > 0 then
+		Helpers.log("ERR: Stargate Active")
+	else
+		local addrTable = {}
+		address = AddressBook.getAddressFromIDOrAddress(input)
+
+		if address.security.restricted then
+			Helpers.log("Access to this address is restricted.\nDialing sequence aborted")
+			return
+		end
+
+		return address
+	end
+end
+
+
 return {
 	getAddressFromIDOrAddress = getAddressFromIDOrAddress,
 	getAddressBook = getAddressBook,
