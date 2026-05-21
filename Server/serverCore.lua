@@ -1,3 +1,88 @@
+local commands = {
+	{
+		name = "dial",
+		alias = { "fdial" },
+		description = "Requests the stargate to dial an address",
+		func=(function (cmdTable)
+			print("Dialing: " .. cmdTable[2])
+			os.queueEvent("dial_stargate", cmdTable[2], cmdTable[1] == "fdial")
+		end)
+	},
+	{
+		name = "close",
+		alias = { "disconnect", "dc", "abort" },
+		description = "Disconnects the stargate, or aborts if currently dialing",
+		func = (function(cmdTable)
+			SGHandler.abortOrDisconnect()
+		end)
+	},
+	{
+		name = "iris",
+		description = "Manage the stargate's iris",
+		func = (function (cmdTable)
+			if cmdTable[2] == "open" then
+				SGHandler.toggleIris(true)
+			elseif cmdTable[2] == "close" then
+				SGHandler.toggleIris(false)
+			elseif cmdTable[2] == "status" then
+				if SGHandler.stargate.getIris() then
+					print(
+						string.format(
+							"Iris close percentage: %i",
+							SGHandler.stargate.getIrisProgressPercentage()
+						)
+					)
+				else
+					print("Stargate has no iris")
+				end
+			end
+		end)
+	},
+	{
+		name = "energyintg",
+		description = "Sets the stargate's energy target to 100GFE",
+		func = (function(cmdTable)
+			SGHandler.setGateEnergyTarget(Stargate, 100000000000)
+		end)
+	},
+	{
+		name = "energyints",
+		description = "Sets the stargate's energy target to 200MFE",
+		func = (function(cmdTable)
+			SGHandler.setGateEnergyTarget(Stargate, 200000)
+		end)
+	},
+	{
+		name = "cmd",
+		alias = {"transmit", "msg"},
+		description = "Sends a message through an active stargate",
+		func = (function (cmdTable)
+			if not SGHandler.stargate.isWormholeOpen() then
+				print("There must be an active connection in order to send a message")
+			end
+	
+			SGHandler.stargate.sendStargateMessage(table.concat(cmdTable, " ", 2))
+		end)
+	},
+	{
+		name = "address",
+		alias = { "addr" },
+		description = "Misc Address commands",
+		func = (function(cmdTable)
+			if cmdTable[2] == "show" and cmdTable[3] ~= nil then
+				local address = AddressBook.getAddressFromIDOrAddress(cmdTable[3])
+	
+				if address then
+					print(string.format("Address for %s: %s", address.display, address.address))
+				else
+					print("No address found for " .. cmdTable[3])
+				end
+			end
+		end)
+	}
+}
+
+
 function listenRequestCommand()
     while true do
         local event, command = os.pullEvent("request_command")
@@ -18,58 +103,17 @@ function commandHandler(cmd)
 		table.insert(cmdTable, seg)
 	end
 
-	if cmdTable[1] == "dial" or cmdTable[1] == "fdial" and cmdTable[2] ~= nil then
-		local addrTable = {}
-
-		for value in cmdTable[2]:gmatch("[^-,]+") do
-			table.insert(addrTable, tonumber(value))
-		end
-	
-		print("Dialing: " .. cmdTable[2])
-
-		os.queueEvent("dial_stargate", addrTable, cmdTable[1] == "fdial")
-	elseif cmdTable[1] == "close" or cmdTable[1] == "disconnect" or cmdTable[1] == "dc" or cmdTable[1] == "abort" then
-		SGHandler.abortOrDisconnect()
-	elseif cmdTable[1] == "iris" then
-		if cmdTable[2] == "open" then
-			SGHandler.toggleIris(true)
-		elseif cmdTable[2] == "close" then
-			SGHandler.toggleIris(false)
-		elseif cmdTable[2] == "status" then
-			if SGHandler.stargate.getIris() then
-				print(
-					string.format(
-						"Iris close percentage: %i",
-						SGHandler.stargate.getIrisProgressPercentage()
-					)
-				)
-			else
-				print("Stargate has no iris")
+	for i, c in pairs(commands) do
+		if c.name == cmdTable[1] then
+			c.func(cmdTable)
+		elseif c.alias ~= nil then
+			for j, a in pairs(c.alias) do
+				if a == cmdTable[1] then
+					c.func(cmdTable)
+				end
 			end
 		end
-	elseif cmdTable[1] == "energyintg" then
-		SGHandler.setGateEnergyTarget(Stargate, 100000000000)
-	elseif cmdTable[1] == "energyints" then
-		SGHandler.setGateEnergyTarget(Stargate, 200000)
-	elseif cmdTable[1] == "cmd" or cmdTable[1] == "transmit" or cmdTable[1] == "msg" then
-		if not SGHandler.stargate.isWormholeOpen() then
-			print("There must be an active connection in order to send a message")
-		end
-
-		SGHandler.stargate.sendStargateMessage(table.concat(cmdTable, " ", 2))
-	elseif cmdTable[1] == "togglealarms" and cmdTable[2] ~= nil then
-		os.queueEvent("request_lockdown", cmdTable[2] == "true")
-	elseif cmdTable[1] == "address" or cmdTable[1] == "addr" then
-		if cmdTable[2] == "show" and cmdTable[3] ~= nil then
-			local address = AddressBook.getAddressFromIDOrAddress(cmdTable[3])
-
-			if address then
-				print(string.format("Address for %s: %s", address.display, address.address))
-			else
-				print("No address found for " .. cmdTable[3])
-			end
-		end
-	end
+	end	
 end
 
 function startInterfaces()

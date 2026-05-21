@@ -259,7 +259,10 @@ end
 function listenDialStargate()
 	while true do
 		local event, address, isFast = os.pullEvent("dial_stargate")
-		dialStargate(address, isFast)
+
+		activeAddress = AddressBook.getAddressFromIDOrAddress(address)
+
+		dialStargate(AddressBook.stringToTable(address), isFast)
 	end
 end
 

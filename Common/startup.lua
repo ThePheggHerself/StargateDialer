@@ -1,21 +1,17 @@
 Strings = require("cc.strings")
 Basalt = require("basalt")
-
+AddressBook = require("addressBook")
 Wireless = require("wirelessHandler")
 
 if pocket then -- If it is a pocket computer
     InstanceType = "pocket"
-
-    AddressBook = require("addressBook")
     PocketInterface = require("pocketInterface")
     
-
     PocketCore = require("pocketCore")
     PocketCore.run()
 elseif peripheral.find("monitor") then -- If it is a client
     InstanceType = "client"
-
-    AddressBook = require("addressBook")
+    
     Relay = { peripheral.find("redstone_relay") }
 	Monitor = peripheral.find("monitor")
 	Helpers = require("helpers") -- Helper functions

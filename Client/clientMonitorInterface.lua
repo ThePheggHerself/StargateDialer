@@ -71,7 +71,7 @@ function createInfoTab(tabControl)
 	feedbackLabel = infoTab:addLabel({ x = 2, y = 27, text = "", foreground = colors.yellow })
 end
 
-function createDialTab(tabControl, addressBook)
+function refreshDialTab(tabControl, addressBook)
 	local dialTab = tabControl:newTab("Dial")
 
 	-- Fast Dial Checkbox
@@ -367,7 +367,7 @@ function createInterface(basalt)
 	})
 
 	createInfoTab(tabControl)
-	createDialTab(tabControl, AddressBook.getAddressBook())
+	refreshDialTab(tabControl, AddressBook.getAddressBook())
 	createDebugTab(tabControl)
 
 	basalt.schedule(function()

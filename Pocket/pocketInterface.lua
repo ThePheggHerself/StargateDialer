@@ -10,6 +10,8 @@ local localAddressLabel = nil
 local networkLabel = nil
 local fastDialCheckbox = nil
 
+addressTab = nil
+
 local function isFastDial()
     if fastDial.checked then
         return "fdial"
@@ -32,8 +34,6 @@ FilterType = {
 }
 
 function createDialTab(main, addressBook)
-
-	-- Fast Dial Checkbox
 	main:addLabel({
 		x = 3,
 		y = 1,
@@ -64,7 +64,7 @@ function createDialTab(main, addressBook)
         })
 	end)
 
-	local addressTab = main:addTabControl({
+	addressTab = main:addTabControl({
 		x = 1,
 		y = 2,
 		width = 49,
@@ -74,6 +74,15 @@ function createDialTab(main, addressBook)
 		activeTabBackground = colors.lightBlue
 	})
 
+	refreshDialTab(addressBook)
+end
+
+
+function refreshDialTab(addressBook)
+
+	-- Fast Dial Checkbox
+	
+	addressTab:clear()
 
 	local localList = addressTab:newTab("7-Chev")
 	local galacticList = addressTab:newTab("8-Chev")
@@ -83,7 +92,7 @@ function createDialTab(main, addressBook)
 	local galacticPos = {x = 2, y = 2}
 	local directPos = {x = 2, y = 2}
     local originButtonX = 2
-    local secondButtonX = 14
+    local secondButtonX = 15
 
 	for i, addr in pairs(addressBook) do
 		local addressTable = AddressBook.stringToTable(addr.address)
@@ -95,7 +104,7 @@ function createDialTab(main, addressBook)
 			end
 
             local buttonProperties = {
-                width = 10,
+                width = 11,
                 height = 1,
                 text = addr.display,
                 foreground = colors.white,
@@ -103,8 +112,6 @@ function createDialTab(main, addressBook)
             }
 
             local buttonFunction = function()
-				print("BBBB")
-
                 Wireless.transmitMessage({
                     type = "cmd",
                     content =  isFastDial() .. " " .. addr.address
