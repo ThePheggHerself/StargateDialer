@@ -1,7 +1,32 @@
+local args = {...}
+
 Strings = require("cc.strings")
 Basalt = require("basalt")
 AddressBook = require("addressBook")
 Wireless = require("wirelessHandler")
+
+print("Welcome to the basalt dialer")
+
+local disableAutoUpdate = false
+
+for i, arg in pairs(args) do
+    if arg == "noupdate" then
+        disableAutoUpdate = true
+    end
+end
+
+if not disableAutoUpdate then
+    print("Updating addresses")
+
+    shell.run("delete addresses.conf")
+    shell.run("wget https://raw.githubusercontent.com/ThePheggHerself/StargateDialer/refs/heads/main/addresses.conf")
+    
+    print("Waiting to startup")
+
+    sleep(1)
+end
+
+
 
 if pocket then -- If it is a pocket computer
     InstanceType = "pocket"
