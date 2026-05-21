@@ -19,10 +19,8 @@ function getAddressFromAddress(addrStr)
 	if addrStr == nil then
 		return nil
 	else
-		newAddrStr = addrStr:sub(1, -3)
-
 		for name, address in pairs(addressTable) do
-			if address.address == newAddrStr then
+			if address.address == addrStr or address.address == addrStr:sub(1, -3) then
 				return address
 			end
 		end

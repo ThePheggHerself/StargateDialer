@@ -1,6 +1,8 @@
-local modem = peripheral.find("ender_modem") or peripheral.find("modem")
+local modem = peripheral.find("modem", isWireless)
 local computerListenPort = 28465
 local pocketListenPort = 56482
+
+LastHeartbeat = os.time("utc")
 
 function listenModemMessage()
 	if modem then
@@ -24,13 +26,19 @@ function listenModemMessage()
 			end
 
 			if validSender then
-				local msgTable = textutils.unserialize(msg)
+				local msgTable = textutils.unserialize(message)
+
+				LastHeartbeat = msgTable.timestamp
+
+				if not pocket then
+					Helpers.log("Remote message recieved: " .. msgTable.type)
+				end
 
 				if msgTable then
 					if msgTable.type == "cmd" then
 						os.queueEvent("basalt_command", msgTable.content)
-					elseif msgTable.type == "data_update" then
-						os.queueEvent("data_update", msgTable.content)
+					elseif msgTable.type == "data_update" and pocket then
+						--PocketInterface.updateGateData(msgTable.content)
 					end
 				end
 			end
@@ -42,12 +50,24 @@ function listenDataUpdate()
     while true do 
         local event, data = os.pullEvent("data_update")
 
-        transmitMessage(data)
+        transmitMessage( { type = "data_update", content = data})
     end
 end
 
 function transmitMessage(content)
     if modem then
-        modem.transmit(pocketListenPort, computerListenPort, textutils.serialize(content))
+		content.timestamp = os.time("utc")
+		if pocket then
+			modem.transmit(computerListenPort, pocketListenPort,  textutils.serialize(content))
+		else
+			modem.transmit(pocketListenPort, computerListenPort, textutils.serialize(content))
+		end
+       
     end
 end
+
+return {
+	listenModemMessage = listenModemMessage,
+	listenDataUpdate = listenDataUpdate,
+	transmitMessage = transmitMessage
+}

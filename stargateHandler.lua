@@ -267,11 +267,17 @@ function dataUpdater()
 					AddressBook.getAddressFromIDOrAddress(stargate.addressToString(stargate.getConnectedAddress()))
 			end
 
+			local iris = {
+				status = irisStatus(),
+				durability = stargate.getIrisDurability(),
+				maxDurability = stargate.getIrisMaxDurability(),
+			}
+
 			os.queueEvent("data_update", {
 				activeAddress = activeAddress,
 				status = stargateStatus(),
 				warning = warning,
-				iris = irisStatus(),
+				iris = iris,
 				basic = basic,
 				advanced = advanced,
 			})
@@ -337,6 +343,16 @@ function shouldAbortDial()
 	return false
 end
 
+function abortOrDisconnect()
+	if stargate.isStargateConnected() then
+		stargate.disconnectStargate()
+	elseif stargate.getChevronsEngaged() > 0 then
+		cancelDial = true
+	else
+		Helpers.log("Stargate is not dialing or connected")
+	end
+end
+
 function requestAddress(input, fastDial, addPoO)
 	if stargate.isWormholeOpen() or stargate.isStargateDialingOut() or stargate.getChevronsEngaged() > 0 then
 		Helpers.log("ERR: Stargate Active")
@@ -353,8 +369,6 @@ function requestAddress(input, fastDial, addPoO)
 		Helpers.log(string.format("Address: %s", address.address))
 		addrTable = AddressBook.stringToTable(address.address)
 		activeAddress = address
-
-		Helpers.log(address.security.sirens)
 
 		if address.id == nil or address.security.sirens then
 			toggleRelays(true)
@@ -596,4 +610,5 @@ return {
 	irisStatus = irisStatus,
 	toggleIris = toggleIris,
 	setGateEnergyTarget = setGateEnergyTarget,
+	abortOrDisconnect = abortOrDisconnect,
 }

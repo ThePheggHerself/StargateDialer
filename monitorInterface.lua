@@ -7,8 +7,9 @@ local displayLabel = nil
 local addressLabel = nil
 local openTimeLabel = nil
 local irisLabel = nil
+local irisDuraLabel = nil
 local energyLabel = nil
-local energyTagetLabel = nil
+local interfaceEnergyLabel = nil
 local feedbackLabel = nil
 
 local chevronTable = nil
@@ -40,14 +41,19 @@ function createInfoTab(tabControl)
 	:loadXML([[
 		<label x="2" y="4" text="Stargate Status:" foreground="orange"/>
 		<label x="2" y="12" text="Iris Status:" foreground="orange"/>
-		<button x="2" y="15" width="10" height="1" text="Close" background="red" foreground="white" onClick="closeIris"/>
-		<button x="14" y="15" width="10" height="1" text="Open" background="green" foreground="white" onClick="openIris"/>
-		<label x="2" y="17" text="Energy Info" foreground="orange"/>
+		<button x="2" y="16" width="10" height="1" text="Close" background="red" foreground="white" onClick="closeIris"/>
+		<button x="14" y="16" width="10" height="1" text="Open" background="green" foreground="white" onClick="openIris"/>
 
+		<label x="2" y="18" text="Controls:"/>
 		<button x="2" y="20" width="13" height="1" text="Disconnect" background="red" foreground="white" onClick="disconnect"/>
 		<button x="16" y="20" width="10" height="1" text="Sirens" background="red" foreground="white" onClick="toggleSirens"/>
 
-		<label x="2" y="23" text="Feedback Status:" foreground="orange"/>
+
+		<label x="2" y="22" text="Energy Info" foreground="orange"/>
+
+		
+
+		<label x="2" y="26" text="Feedback Status:" foreground="orange"/>
 	]], scope)
 
 	warningLabel = infoTab:addLabel({ x = 2, y = 2, foreground = colors.red, text = "" })
@@ -57,10 +63,12 @@ function createInfoTab(tabControl)
 	displayLabel = infoTab:addLabel({ x = 2, y = 9, text = "Origin: ", foreground = colors.yellow })
 	addressLabel = infoTab:addLabel({ x = 2, y = 10, text = "Address: N/A", foreground = colors.yellow })	
 	irisLabel = infoTab:addLabel({x = 2,y = 13,text = "N/A",foreground = colors.yellow,})
+	irisDuraLabel = infoTab:addLabel({x = 2,y = 14, width=38,text = "",foreground = colors.yellow,})
 
-	energyLabel = infoTab:addLabel({x = 2,y = 18,text = "Energy: ",foreground = colors.yellow})
+	energyLabel = infoTab:addLabel({x = 2,y = 23,text = "Gate Energy: ",foreground = colors.yellow})
+	interfaceEnergyLabel = infoTab:addLabel({x = 2,y = 24,text = "Interface Energy: ",foreground = colors.yellow})
 
-	feedbackLabel = infoTab:addLabel({ x = 2, y = 24, text = "", foreground = colors.yellow })
+	feedbackLabel = infoTab:addLabel({ x = 2, y = 27, text = "", foreground = colors.yellow })
 end
 
 function createDialTab(tabControl, addressBook)
@@ -81,67 +89,145 @@ function createDialTab(tabControl, addressBook)
 		foreground = colors.yellow,
 	})
 
-	local addressList = {}
+	dialTab:addButton({
+		x = 17,
+		y = 2,
+		width = 19,
+		height = 1,
+		text = "Abort/Disconnect",
+		foreground = colors.white,
+		background = colors.red
+	})
+	:onClick(function()
+		os.queueEvent("basalt_command", "disconnect")
+	end)
 
-	for i, addr in pairs(addressBook) do
-		if not addr.hidden then
-			if addressList[addr.category] == nil then
-				addressList[addr.category] = { addr }
-			else
-				table.insert(addressList[addr.category], addr)
-			end
-		end
-	end
-
-	local scrollFrame = dialTab:addScrollFrame({
+	local addressTab = dialTab:addTabControl({
 		x = 2,
-		y = 3,
-		width = 27,
-		height = 22,
+		y = 4,
+		width = 34,
+		height = 34,
 		background = colors.gray,
+		headerBackground = colors.cyan,
+		activeTabBackground = colors.lightBlue
 	})
 
-	posX = 2
-	posY = 1
 
-	for category, addresses in pairs(addressList) do
-		posX = 2
-		posY = posY + 1
+	local localList = addressTab:newTab("7-Chevron")
+	local galacticList = addressTab:newTab("8-Chevron")
+	local directList = addressTab:newTab("9-Chevron")
+	local otherList = addressTab:newTab("Invalid")
+	
+	local localPos = {x = 2, y = 2}
+	local galacticPos = {x = 2, y = 2}
+	local directPos = {x = 2, y = 2}
+	local otherPos = {x = 2, y = 2}
 
-		scrollFrame:addLabel({
-			x = posX,
-			y = posY,
-			text = category,
-			foreground = colors.orange,
-		})
-		posY = posY + 1
+	for i, addr in pairs(addressBook) do
+		local addressTable = AddressBook.stringToTable(addr.address)
 
-		--print(category[1] .. " " .. #category[2])
+		if not addr.hidden then
+			local color = colors.green
+			if addr.security.restricted then
+				color = colors.red
+			end
 
-		for i, address in pairs(addresses) do	
-				scrollFrame:addButton({
-					x = posX,
-					y = posY,
-					width = 10,
+			if #addressTable == 6 then -- 7-Chevron addresses
+				localList:addButton({
+					x = localPos.x,
+					y = localPos.y,
+					width = 15,
 					height = 1,
-					text = address.display,
+					text = addr.display,
 					foreground = colors.white,
-					background = colors.blue,
+					background = color
 				})
-				:setBackgroundState("clicked", colors.lightBlue)
 				:onClick(function()
 					if fastDial.checked then
-						os.queueEvent("basalt_command", "fdial " .. address.id)
+						os.queueEvent("basalt_command", "fdial " .. addr.id)
 					else
-						os.queueEvent("basalt_command", "dial " .. address.id)
+						os.queueEvent("basalt_command", "dial " .. addr.id)
 					end
 				end)
 
-			if posX == 2 then
-				posX = 13
-			else
-				posX = 2
-				posY = posY + 1
+				if localPos.x == 2 then
+					localPos.x = 19
+				else
+					localPos.x = 2
+					localPos.y = localPos.y + 1
+				end
+			elseif #addressTable == 7 then -- 8-Chevron addresses
+				galacticList:addButton({
+					x = galacticPos.x,
+					y = galacticPos.y,
+					width = 15,
+					height = 1,
+					text = addr.display,
+					foreground = colors.white,
+					background = color
+				})
+				:onClick(function()
+					if fastDial.checked then
+						os.queueEvent("basalt_command", "fdial " .. addr.id)
+					else
+						os.queueEvent("basalt_command", "dial " .. addr.id)
+					end
+				end)
+
+				if galacticPos.x == 2 then
+					galacticPos.x = 19
+				else
+					galacticPos.x = 2
+					galacticPos.y = galacticPos.y + 1
+				end
+			elseif #addressTable == 8 then -- 9-Chevron Addresses
+				directList:addButton({
+					x = directPos.x,
+					y = directPos.y,
+					width = 15,
+					height = 1,
+					text = addr.display,
+					foreground = colors.white,
+					background = color
+				})
+				:onClick(function()
+					if fastDial.checked then
+						os.queueEvent("basalt_command", "fdial " .. addr.id)
+					else
+						os.queueEvent("basalt_command", "dial " .. addr.id)
+					end
+				end)
+
+				if directPos.x == 2 then
+					directPos.x = 19
+				else
+					directPos.x = 2
+					directPos.y = directPos.y + 1
+				end
+			else -- Basically anything else
+				otherList:addButton({
+					x = otherPos.x,
+					y = otherPos.y,
+					width = 15,
+					height = 1,
+					text = addr.display,
+					foreground = colors.white,
+					background = color
+				})
+				:onClick(function()
+					if fastDial.checked then
+						os.queueEvent("basalt_command", "fdial " .. addr.id)
+					else
+						os.queueEvent("basalt_command", "dial " .. addr.id)
+					end
+				end)
+
+				if otherPos.x == 2 then
+					otherPos.x = 19
+				else
+					otherPos.x = 2
+					otherPos.y = otherPos.y + 1
+				end
 			end
 		end
 	end
@@ -222,7 +308,7 @@ function createDebugTab(tabControl)
 		:addRow("Chevron 9", "Idle")
 end
 
-function listenBasaltDataUpdate() -- "data_update"
+function updateGateData() -- "data_update"
 	while true do
 		local event, data = os.pullEvent("data_update")
 
@@ -233,12 +319,30 @@ function listenBasaltDataUpdate() -- "data_update"
 		displayLabel:setText(data.activeAddress.display)
 		addressLabel:setText(data.activeAddress.address:sub(2, -2))
 		openTimeLabel:setText("Open Time: " .. Helpers.ticksToMinutesSeconds(data.basic.openTime))
-		irisLabel:setText(data.iris)
+		irisLabel:setText(data.iris.status)
+
+		if data.iris.maxDurability > 0 then
+			irisDuraLabel:setText(
+			string.format(
+				"Durability: %d%%",
+				math.floor(data.iris.durability/data.iris.maxDurability*100)
+			)
+		)
+		end
+
+		
 		energyLabel:setText(
 			string.format(
-				"Energy: %s/%s",
+				"Gate Energy: %s/%s",
 				Helpers.convertToPowerUnits(data.basic.gateEnergy),
 				Helpers.convertToPowerUnits(data.basic.gateEnergyTarget)
+			)
+		)
+		interfaceEnergyLabel:setText(
+			string.format(
+				"Interface Energy: %s/%s",
+				Helpers.convertToPowerUnits(data.basic.interfaceEnergy),
+				Helpers.convertToPowerUnits(data.basic.interfaceEnergyCapacity)
 			)
 		)
 		feedbackLabel:setText(GateFeedbackCodes[data.basic.feedbackCode])
@@ -268,14 +372,20 @@ function listenBasaltChevronUpdate() -- "basalt_chevron_update"
 end
 
 function createInterface(basalt)
+	Monitor.setTextScale(0.5)
+
+	local x,y = Monitor.getSize()
+
 	local main = basalt.createFrame():setTerm(Monitor)
 
 	local tabControl = main:addTabControl({
 		x = 1,
 		y = 1,
-		width = 29,
-		height = 26,
+		width = x,
+		height = y,
 		background = colors.black,
+		headerBackground = colors.cyan,
+		activeTabBackground = colors.lightBlue
 	})
 
 	createInfoTab(tabControl)
@@ -283,7 +393,7 @@ function createInterface(basalt)
 	createDebugTab(tabControl)
 
 	basalt.schedule(function()
-		parallel.waitForAny(listenBasaltDataUpdate, listenBasaltChevronUpdate)
+		parallel.waitForAny(updateGateData, listenBasaltChevronUpdate)
 	end)
 end
 

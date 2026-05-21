@@ -1,12 +1,19 @@
 Strings = require("cc.strings")
 Basalt = require("basalt")
-Relay = { peripheral.find("redstone_relay") }
-Monitor = peripheral.find("monitor")
-SGHandler = require("stargateHandler") -- Handles everything Stargate related
-Helpers = require("helpers") -- Helper functions
-MonitorInterface = require("monitorInterface") -- Handles the UI on the monitor
-TerminalInterface = require("terminalInterface") -- Handles the UI on the terminal
 AddressBook = require("addressBook")
+Wireless = require("wirelessHandler")
+
+if not pocket then
+	Relay = { peripheral.find("redstone_relay") }
+	Monitor = peripheral.find("monitor")
+	SGHandler = require("stargateHandler") -- Handles everything Stargate related
+	Helpers = require("helpers") -- Helper functions
+	MonitorInterface = require("monitorInterface") -- Handles the UI on the monitor
+	TerminalInterface = require("terminalInterface") -- Handles the UI on the terminal
+else
+	PocketInterface = require("pocketInterface")
+end
+
 
 -- Events
 
@@ -35,10 +42,8 @@ function commandHandler(cmd)
 	if cmdTable[1] == "dial" or cmdTable[1] == "fdial" and cmdTable[2] ~= nil then
 		Helpers.log("Dialing: " .. cmdTable[2])
 		os.queueEvent("request_address", cmdTable[2], cmdTable[1] == "fdial", true)
-	elseif cmdTable[1] == "close" or cmdTable[1] == "disconnect" or cmdTable[1] == "dc" then
-		if not SGHandler.stargate.disconnectStargate() then
-			Helpers.log("Err: Stargate cannot be disconnected")
-		end
+	elseif cmdTable[1] == "close" or cmdTable[1] == "disconnect" or cmdTable[1] == "dc" or cmdTable[1] == "abort" then
+		SGHandler.abortOrDisconnect()
 	elseif cmdTable[1] == "iris" then
 		if cmdTable[2] == "open" then
 			SGHandler.toggleIris(true)
@@ -86,14 +91,6 @@ function commandHandler(cmd)
 				Helpers.log("No address found for " .. cmdTable[3])
 			end
 		end
-	elseif cmdTable[1] == "abort" then
-		if SGHandler.stargate.getChevronsEngaged() > 0 then
-			cancelDial = true
-
-			Helpers.log("Dial sequence aborted")
-		else
-			Helpers.log("The gate is currently not dialing")
-		end
 	end
 end
 
@@ -103,15 +100,24 @@ end
 
 -- Running Computer
 
+if not pocket then
+	MonitorInterface.createInterface(Basalt)
+	TerminalInterface.createInterface(Basalt)
+	
+	Helpers.log("Welcome to the BasaltDialer Terminal")
 
-MonitorInterface.createInterface(Basalt)
-TerminalInterface.createInterface(Basalt)
+	parallel.waitForAny(
+		SGHandler.runListeners,
+		Wireless.listenModemMessage,
+		Wireless.listenDataUpdate,
+		listenBasaltCommand,
+		startInterfaces
+	)
+else
+	PocketInterface.createInterface(Basalt)
 
-Helpers.log("Welcome to the BasaltDialer Terminal")
-
-parallel.waitForAny(
-	SGHandler.runListeners,
-	--Wireless.listenModemMessage,
-	listenBasaltCommand,
-	startInterfaces
-)
+	parallel.waitForAny(
+		Wireless.listenModemMessage,
+		startInterfaces
+	)
+end
