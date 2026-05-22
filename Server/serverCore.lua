@@ -42,14 +42,14 @@ local commands = {
 		name = "energyintg",
 		description = "Sets the stargate's energy target to 100GFE",
 		func = (function(cmdTable)
-			SGHandler.setGateEnergyTarget(Stargate, 100000000000)
+			SGHandler.setGateEnergyTarget(100000000000)
 		end)
 	},
 	{
 		name = "energyints",
 		description = "Sets the stargate's energy target to 200MFE",
 		func = (function(cmdTable)
-			SGHandler.setGateEnergyTarget(Stargate, 200000)
+			SGHandler.setGateEnergyTarget(200000)
 		end)
 	},
 	{

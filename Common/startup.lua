@@ -3,7 +3,7 @@ local args = {...}
 Strings = require("cc.strings")
 Basalt = require("basalt")
 
-Wireless = require("wirelessHandler")
+
 
 print("Welcome to the basalt dialer")
 
@@ -29,7 +29,10 @@ if not disableAutoUpdate then
     sleep(1)
 end
 
+
 AddressBook = require("addressBook")
+Wireless = require("wirelessHandler")
+Helpers = require("helpers")
 
 if pocket then -- If it is a pocket computer
     InstanceType = "pocket"
@@ -42,7 +45,6 @@ elseif peripheral.find("monitor") then -- If it is a client
     
     Relay = { peripheral.find("redstone_relay") }
 	Monitor = peripheral.find("monitor")
-	Helpers = require("helpers") -- Helper functions
 	MonitorInterface = require("clientMonitorInterface") -- Handles the UI on the monitor
 	TerminalInterface = require("clientTerminalInterface") -- Handles the UI on the terminal
     

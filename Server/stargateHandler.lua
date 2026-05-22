@@ -432,7 +432,7 @@ end
 
 -- Updates the Stargate's energy target
 function setGateEnergyTarget(value)
-	print("Changing energy target to " .. convertToPowerUnits(value))
+	print("Changing energy target to " .. Helpers.convertToPowerUnits(value))
 
 	stargate.setEnergyTarget(value)
 end
