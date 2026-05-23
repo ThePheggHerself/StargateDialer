@@ -24,7 +24,7 @@ function listenStargateChevronEngaged() -- "stargate_chevron_engaged"
 			os.pullEvent("stargate_chevron_engaged")
 
 		if incomingConnection and engagedChevron == 1 then -- Start of an incoming connection
-			print("WARNING! Incoming Connection!")
+			Helpers.log("WARNING! Incoming Connection!")
 			warning = "Offworld Activation!"
 
 			toggleIris(false)
@@ -38,7 +38,7 @@ function listenStargateChevronEngaged() -- "stargate_chevron_engaged"
 		end
 
 		chevronTable[engagedChevron + 1] =  chevronText
-		print(string.format("Chevron %s %s", engagedChevron, chevronText))
+		Helpers.log(string.format("Chevron %s %s", engagedChevron, chevronText))
 	end
 end
 
@@ -46,16 +46,16 @@ function listenStargateIncomingWormhole() -- "stargate_incoming_wormhole"
 	while true do
 		local name, periphName, addressTable = os.pullEvent("stargate_incoming_wormhole")
 
-		print("Incoming wormhole Formed")
+		Helpers.log("Incoming wormhole Formed")
 
 		local addrStr = stargate.addressToString(addressTable)
 		local address = AddressBook.getAddressFromIDOrAddress(addrStr)
 
 		if address.id then
-			print(string.format("Origin: %s (%s)", address.address, address.display))
+			Helpers.log(string.format("Origin: %s (%s)", address.address, address.display))
 			activeAddress = address
 		else
-			print(string.format("Origin: %s (Unknown)", addrStr))
+			Helpers.log(string.format("Origin: %s (Unknown)", addrStr))
 			activeAddress = { id = "unknown", display = "Unknown", address = addrStr }
 		end
 
@@ -85,7 +85,7 @@ function listenStargateOutgoingWormhole() -- "stargate_outgoing_wormhole"
 	while true do
 		local name, periphName, address = os.pullEvent("stargate_outgoing_wormhole")
 
-		print("Outgoing wormhole Formed")
+		Helpers.log("Outgoing wormhole Formed")
 		--Helpers.toggleRelays(true)
 	end
 end
@@ -93,7 +93,7 @@ end
 function listenStargateDisconnected() -- "stargate_disconnected"
 	while true do
 		local name, periphName, feedback, feedbackDescription = os.pullEvent("stargate_disconnected")
-		print(string.format("Disconnected: %s", feedback))
+		Helpers.log(string.format("Disconnected: %s", feedback))
 	end
 end
 
@@ -101,7 +101,7 @@ function listenStargateReset() -- "stargate_reset"
 	while true do
 		local name, periphName, feedback, feedbackDescription = os.pullEvent("stargate_reset")
 
-		print(string.format("Reset: %s", feedback))
+		Helpers.log(string.format("Reset: %s", feedback))
 		activeAddress = { display = "Not Connected", address = "" }
 		warning = ""
 
@@ -126,10 +126,10 @@ function listenStargateDeconstructEntity() -- "stargate_deconstructing_entity"
 		local name, periphName, entityType, entityName, entityUUID, destroyed =
 			os.pullEvent("stargate_deconstructing_entity")
 		if destroyed then
-			print("Caution: Entity destroyed by entering incoming wormhole")
-			print("Entity: %s (%s)")
+			Helpers.log("Caution: Entity destroyed by entering incoming wormhole")
+			Helpers.log("Entity: %s (%s)")
 		else
-			print(string.format("Entity entered wormhole: %s (%s)", entityName, entityType))
+			Helpers.log(string.format("Entity entered wormhole: %s (%s)", entityName, entityType))
 		end
 	end
 end
@@ -137,7 +137,7 @@ end
 function listenStargateReconstructEntity() -- "stargate_reconstructing_entity"
 	while true do
 		local name, periphName, entityType, entityName, entityUUID = os.pullEvent("stargate_reconstructing_entity")
-		print(string.format("Reconstructed entity: %s (%s)", entityName, entityUUID))
+		Helpers.log(string.format("Reconstructed entity: %s (%s)", entityName, entityUUID))
 	end
 end
 
@@ -156,21 +156,48 @@ function listenStargateMessageRecieved() -- "stargate_message_received"
 	end
 end
 
+function isIDCValid(freq, code,	validOverride)
+	if validOverride then
+		return true, "Override"
+	elseif Settings.ExtraIDCs ~= nil then
+		for i, c in pairs(Settings.ExtraIDCs) do
+			if c.Code == code then
+				return true, c.Name
+			end
+		end
+	else
+		local address = AddressBook.getAddressFromIDOrAddress(stargate.addressToString(stargate.getConnectedAddress()))
+
+		if address.security.IDC and address.security.IDC == code then
+			return true, "Local"
+		end
+		return false, ""
+	end
+end
+
 function listenTransmissionRecieved()
 	while true do
-		local name, periphName, freq, code, matches = os.pullEvent("transceiver_transmission_received")
+		local name, periphName, freq, code, validOverride = os.pullEvent("transceiver_transmission_received")
 
-		print(string.format("[GDO] IDC %s recieved on frequency %s", code, freq))
+		Helpers.log(string.format("[GDO] IDC %s recieved on frequency %s", code, freq))
 
-		if matches then
-			if stargate.isWormholeOpen() then
-				toggleIris(true)
-				print("[GDO] Valid IDC")
-			else
-				print("[GDO] Valid IDC but unsafe request")
+		if not stargate.isWormholeOpen() then
+			Helpers.log("[GDO] IDC recieved but unsafe request. Waiting...")
+
+			while not stargate.isWormholeOpen() do
+				sleep(0.5)
 			end
+
+			Helpers.log("[GDO] Wormhole stabalized")
+		end
+
+		local isValid, codeName = isIDCValid(freq, code, validOverride)
+
+		if isValid then
+			Helpers.log(string.format("[GDO] Valid IDC: %s (%s)", codeName, code))
+			toggleIris(true)
 		else
-			print("[GDO] Invalid IDC")
+			Helpers.log("[GDO] Invalid IDC")
 		end
 	end
 end
@@ -234,11 +261,11 @@ end
 cancelDial = false
 function shouldAbortDial()
 	if stargate.getRecentFeedback() == -30 then
-		print("Dialing sequence aborted due to incoming connection")
+		Helpers.log("Dialing sequence aborted due to incoming connection")
 		return true
 	elseif cancelDial then
 		stargate.disconnectStargate()
-		print("Dialing sequence aborted")
+		Helpers.log("Dialing sequence aborted")
 		cancelDial = false
 		return true
 	end
@@ -250,9 +277,9 @@ function abortOrDisconnect()
 		stargate.disconnectStargate()
 	elseif stargate.getChevronsEngaged() > 0 then
 		cancelDial = true
-		print("Dial aborted")
+		Helpers.log("Dial aborted")
 	else
-		print("Stargate is not dialing or connected")
+		Helpers.log("Stargate is not dialing or connected")
 	end
 end
 
@@ -279,7 +306,7 @@ function dialStargate(addArr, isFast)
 
 	for _, symbol in pairs(addArr) do
 		if shouldAbortDial() then
-			print("Dial sequence aborted")
+			Helpers.log("Dial sequence aborted")
 			stargate.disconnectStargate()
 			break
 		end
@@ -302,7 +329,7 @@ function dialStargate(addArr, isFast)
 				end
 
 				if shouldAbortDial() then
-					print("Dial sequence aborted")
+					Helpers.log("Dial sequence aborted")
 					stargate.disconnectStargate()
 					break
 				end
@@ -403,28 +430,28 @@ function toggleIris(state)
 			if stargate.getIrisProgressPercentage() > 0 then
 				stargate.openIris()
 
-				print("Opening Iris")
+				Helpers.log("Opening Iris")
 
 				while SGHandler.stargate.getIrisProgressPercentage() > 0 do
 					sleep(0.5)
 				end
 
-				print("Iris Opened")
+				Helpers.log("Iris Opened")
 			else
-				print("Iris already open")
+				Helpers.log("Iris already open")
 			end
 		else
 			if stargate.getIrisProgressPercentage() < 100 then
 				stargate.closeIris()
 
-				print("Closing Iris")
+				Helpers.log("Closing Iris")
 
 				while SGHandler.stargate.getIrisProgressPercentage() < 100 do
 					sleep(0.5)
 				end
-				print("Iris closed")
+				Helpers.log("Iris closed")
 			else
-				print("Iris already closed")
+				Helpers.log("Iris already closed")
 			end
 		end
 	end
@@ -432,7 +459,7 @@ end
 
 -- Updates the Stargate's energy target
 function setGateEnergyTarget(value)
-	print("Changing energy target to " .. Helpers.convertToPowerUnits(value))
+	Helpers.log("Changing energy target to " .. Helpers.convertToPowerUnits(value))
 
 	stargate.setEnergyTarget(value)
 end

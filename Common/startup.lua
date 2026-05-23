@@ -1,53 +1,76 @@
 local args = {...}
 
 Strings = require("cc.strings")
-Basalt = require("basalt")
-
-
-
 print("Welcome to the basalt dialer")
 
-local disableAutoUpdate = false
+Settings = {}
 
-for i, arg in pairs(args) do
-    if arg == "noupdate" then
-        disableAutoUpdate = true
-    end
+sleep(0.5)
+
+local settingsFile = "settings.conf"
+local addressesFile = "addresses.conf"
+
+if not fs.exists(settingsFile) then
+    print("No settings file found")
+
+    Settings = {
+        AutoUpdateAddresses = true,
+        ServerListenPort = 28465,
+        ClientListenPort = 56482
+    }
+
+    local file = fs.open(settingsFile, "w")
+	file.write(textutils.serialize(Settings))
+	file.close()
+
+    print("Default settings file created")
+    
+    sleep(0.5)
+else
+    print("Loading settings")
+    local file = fs.open(settingsFile, "r")
+    local data = file.readAll()
+    file.close()
+    Settings = textutils.unserialize(data)
 end
 
-if not disableAutoUpdate then
+if Settings.AutoUpdateAddresses then
     print("Updating addresses")
 
-    shell.run("delete addresses.conf")
-
-    sleep(1)
+    if fs.exists(addressesFile) then
+        fs.delete(addressesFile)
+        sleep(0.5)
+    end
 
     shell.run("wget https://raw.githubusercontent.com/ThePheggHerself/StargateDialer/refs/heads/main/addresses.conf")
-
-    print("Waiting to startup")
-
-    sleep(1)
+    sleep(0.5)
+else
+    print("Address autoupdate disabled")
 end
-
 
 AddressBook = require("addressBook")
 Wireless = require("wirelessHandler")
 Helpers = require("helpers")
 
+print("Starting in 3 seconds")
+
+sleep(3)
+
 if pocket then -- If it is a pocket computer
     InstanceType = "pocket"
     PocketInterface = require("pocketInterface")
-    
+    Basalt = require("basalt")
+
     PocketCore = require("pocketCore")
     PocketCore.run()
 elseif peripheral.find("monitor") then -- If it is a client
     InstanceType = "client"
-    
+
     Relay = { peripheral.find("redstone_relay") }
 	Monitor = peripheral.find("monitor")
 	MonitorInterface = require("clientMonitorInterface") -- Handles the UI on the monitor
 	TerminalInterface = require("clientTerminalInterface") -- Handles the UI on the terminal
-    
+    Basalt = require("basalt")
 
     ClientCore = require("clientCore")
     ClientCore.run()

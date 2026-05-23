@@ -4,7 +4,7 @@ local commands = {
 		alias = { "fdial" },
 		description = "Requests the stargate to dial an address",
 		func=(function (cmdTable)
-			print("Dialing: " .. cmdTable[2])
+			Helpers.log("Dialing: " .. cmdTable[2])
 			os.queueEvent("dial_stargate", cmdTable[2], cmdTable[1] == "fdial")
 		end)
 	},
@@ -26,14 +26,14 @@ local commands = {
 				SGHandler.toggleIris(false)
 			elseif cmdTable[2] == "status" then
 				if SGHandler.stargate.getIris() then
-					print(
+					Helpers.log(
 						string.format(
 							"Iris close percentage: %i",
 							SGHandler.stargate.getIrisProgressPercentage()
 						)
 					)
 				else
-					print("Stargate has no iris")
+					Helpers.log("Stargate has no iris")
 				end
 			end
 		end)
@@ -58,7 +58,7 @@ local commands = {
 		description = "Sends a message through an active stargate",
 		func = (function (cmdTable)
 			if not SGHandler.stargate.isWormholeOpen() then
-				print("There must be an active connection in order to send a message")
+				Helpers.log("There must be an active connection in order to send a message")
 			end
 	
 			SGHandler.stargate.sendStargateMessage(table.concat(cmdTable, " ", 2))
@@ -73,9 +73,9 @@ local commands = {
 				local address = AddressBook.getAddressFromIDOrAddress(cmdTable[3])
 	
 				if address then
-					print(string.format("Address for %s: %s", address.display, address.address))
+					Helpers.log(string.format("Address for %s: %s", address.display, address.address))
 				else
-					print("No address found for " .. cmdTable[3])
+					Helpers.log("No address found for " .. cmdTable[3])
 				end
 			end
 		end)
@@ -97,7 +97,7 @@ function commandHandler(cmd)
 
 	local cmdTable = {}
 
-	print("[cmd] " .. cmd)
+	Helpers.log("[cmd] " .. cmd)
 
 	for seg in string.gmatch(cmd, "[^%s]+") do
 		table.insert(cmdTable, seg)
@@ -121,6 +121,8 @@ function startInterfaces()
 end
 
 function run()
+	Helpers.resetTerminal()
+	print("Server started")
     SGHandler.runListeners()
 end
 

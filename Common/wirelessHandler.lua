@@ -1,15 +1,13 @@
 local modem = peripheral.find("modem", isWireless)
-local serverListenPort = 28465
-local clientListenPort = 56482
 
 LastHeartbeat = os.time("utc")
 
 function listenModemMessage()
 	if modem then
 		if InstanceType == "server" then
-			modem.open(serverListenPort)
+			modem.open(Settings.ServerListenPort)
 		else
-			modem.open(clientListenPort)
+			modem.open(Settings.ClientListenPort)
 		end
 	end
 
@@ -20,9 +18,9 @@ function listenModemMessage()
 			local validSender = false
 
 			if InstanceType == "server" then
-				validSender = replyChannel == clientListenPort				
+				validSender = replyChannel == Settings.ClientListenPort
 			else
-				validSender = replyChannel == serverListenPort
+				validSender = replyChannel == Settings.ServerListenPort
 			end
 
 			
@@ -34,7 +32,7 @@ function listenModemMessage()
 					LastHeartbeat = msgTable.timestamp
 
 					if InstanceType == "server" then
-						print("Remote message recieved: " .. msgTable.type)
+						Helpers.log("Remote message recieved: " .. msgTable.type)
 					end
 
 					if msgTable then
@@ -43,6 +41,8 @@ function listenModemMessage()
 						elseif msgTable.type == "data_update" then
 							os.queueEvent("data_update", msgTable.content)
 							--PocketInterface.updateGateData(msgTable.content)
+						elseif msgTable.type == "log" and InstanceType ~= "server" then
+							Helpers.log(msgTable.content)
 						end
 					end
 				end
@@ -55,7 +55,7 @@ function listenDataUpdate()
     while true do 
         local event, data = os.pullEvent("data_update")
 
-        transmitMessage( { type = "data_update", content = data})
+        transmitMessage( { type = "data_update", content = data } )
     end
 end
 
@@ -64,9 +64,9 @@ function transmitMessage(content)
 		content.timestamp = os.time("utc")
 
 		if InstanceType == "server" then		
-			modem.transmit(clientListenPort, serverListenPort, textutils.serialize(content))
+			modem.transmit(Settings.ClientListenPort, Settings.ServerListenPort, textutils.serialize(content))
 		else
-			modem.transmit(serverListenPort, clientListenPort,  textutils.serialize(content))		
+			modem.transmit(Settings.ServerListenPort, Settings.ClientListenPort,  textutils.serialize(content))		
 		end
        
     end

@@ -65,7 +65,7 @@ FilterType = {
 
 
 -- Clears the terminal, and resets the cursor position to 1,1
-function resetTerminal(term)
+function resetTerminal()
 	term.clear()
 	term.setCursorPos(1, 1)
 end
@@ -105,7 +105,13 @@ end
 
 
 function log(msg)
-	if not pocket then
+	if InstanceType == "server" then
+		print(msg)
+		Wireless.transmitMessage({
+			type = "log",
+			content = msg
+		})
+	elseif InstanceType == "client" then
 		os.queueEvent("console_log_request", msg)
 	end
 end
