@@ -33,7 +33,7 @@ function listenStargateChevronEngaged() -- "stargate_chevron_engaged"
 
 		chevronText = "Encoded"
 
-		if (incomingConnection and isAdvancedInterface(periphName)) or not incomingConnection then
+		if (incomingConnection and isAdvancedInterface(peripheral.getType(periphName))) or not incomingConnection then
 			chevronText = "Encoded (" .. encodedSymbol .. ")"
 		end
 
@@ -218,7 +218,7 @@ function dataUpdater()
 				interfaceEnergy = stargate.getEnergy(),
 				interfaceEnergyCapacity = stargate.getEnergyCapacity(),
 				generation = stargate.getStargateGeneration(),
-				interface = peripheral.getName(stargate),
+				interface = peripheral.getType(peripheral.getName(stargate)),
 				feedbackCode = stargate.getRecentFeedback(),
 			}
 
@@ -226,7 +226,7 @@ function dataUpdater()
 				available = false,
 			}
 
-			if isAdvancedInterface(peripheral.getName(stargate)) then
+			if isAdvancedInterface(peripheral.getType(peripheral.getName(stargate))) then
 				advanced = {
 					available = true,
 					localAddress = stargate.addressToString(stargate.getLocalAddress()),
@@ -311,7 +311,7 @@ function dialStargate(addArr, isFast)
 			break
 		end
 
-		if isFast and isCrystalInterface(peripheral.getName(stargate)) then
+		if isFast and isCrystalInterface(peripheral.getType(peripheral.getName(stargate))) then
 			stargate.engageSymbol(symbol)
 		else
 			if isRotatingStargate then
