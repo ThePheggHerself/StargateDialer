@@ -1,84 +1,127 @@
-local args = {...}
-
 Strings = require("cc.strings")
-print("Welcome to the basalt dialer")
-
+SettingsFile = "settings.conf"
+AddressFile = "addresses.conf"
 Settings = {}
+
+function LoadSettings()
+    if not fs.exists(SettingsFile) then
+        print("No settings file found")
+    
+        Settings = {
+            AutoUpdateAddresses = true,
+            ServerListenPort = 28465,
+            ClientListenPort = 56482
+        }
+    
+        local file = fs.open(SettingsFile, "w")
+        file.write(textutils.serialize(Settings))
+        file.close()
+    
+        print("Default settings file created")
+        
+        sleep(0.5)
+    else
+        print("Loading settings")
+        local file = fs.open(SettingsFile, "r")
+        local data = file.readAll()
+        file.close()
+        Settings = textutils.unserialize(data)
+    end
+end
+
+function UpdateAddresses()
+    if Settings.AutoUpdateAddresses then
+        print("Updating addresses")
+
+        if fs.exists(AddressFile) then
+            fs.delete(AddressFile)
+            sleep(0.5)
+        end
+
+        shell.run("wget https://raw.githubusercontent.com/ThePheggHerself/StargateDialer/refs/heads/main/addresses.conf")
+        sleep(0.5)
+    else
+        print("Address autoupdate disabled")
+    end
+end
 
 sleep(0.5)
 
-local settingsFile = "settings.conf"
-local addressesFile = "addresses.conf"
+print("Welcome to the basalt dialer")
 
-if not fs.exists(settingsFile) then
-    print("No settings file found")
-
-    Settings = {
-        AutoUpdateAddresses = true,
-        ServerListenPort = 28465,
-        ClientListenPort = 56482
-    }
-
-    local file = fs.open(settingsFile, "w")
-	file.write(textutils.serialize(Settings))
-	file.close()
-
-    print("Default settings file created")
-    
-    sleep(0.5)
+if pocket then
+    InstanceType = "pocket"
+elseif peripheral.find("monitor") then
+    InstanceType = "client"
 else
-    print("Loading settings")
-    local file = fs.open(settingsFile, "r")
-    local data = file.readAll()
-    file.close()
-    Settings = textutils.unserialize(data)
+    InstanceType = "server"
 end
 
-if Settings.AutoUpdateAddresses then
-    print("Updating addresses")
+print("InstanceType set to: " .. InstanceType)
 
-    if fs.exists(addressesFile) then
-        fs.delete(addressesFile)
-        sleep(0.5)
-    end
-
-    shell.run("wget https://raw.githubusercontent.com/ThePheggHerself/StargateDialer/refs/heads/main/addresses.conf")
-    sleep(0.5)
-else
-    print("Address autoupdate disabled")
-end
+LoadSettings()
 
 AddressBook = require("addressBook")
 Wireless = require("wirelessHandler")
 Helpers = require("helpers")
 
-print("Starting in 3 seconds")
-
-sleep(3)
-
-if pocket then -- If it is a pocket computer
-    InstanceType = "pocket"
-    PocketInterface = require("pocketInterface")
-    Basalt = require("basalt")
-
-    PocketCore = require("pocketCore")
-    PocketCore.run()
-elseif peripheral.find("monitor") then -- If it is a client
-    InstanceType = "client"
-
-    Relay = { peripheral.find("redstone_relay") }
-	Monitor = peripheral.find("monitor")
-	MonitorInterface = require("clientMonitorInterface") -- Handles the UI on the monitor
-	TerminalInterface = require("clientTerminalInterface") -- Handles the UI on the terminal
-    Basalt = require("basalt")
-
-    ClientCore = require("clientCore")
-    ClientCore.run()
-else -- Defaults to server mode
-    InstanceType = "server"
-
-    SGHandler = require("stargateHandler") -- Handles everything Stargate related
-
-    ServerCore = require("serverCore")
-    ServerCore.run()
+local function Startup()
+    
 end
+
+local instanceStart = {
+    pocket = (function(...)
+            PocketInterface = require("pocketInterface")
+            Basalt = require("basalt")
+
+            print("Syncing data with server")
+            local synced = Wireless.clientSyncDataFromServer("addresses")
+
+            if synced then
+                print("Successfully synced addresses with server")
+                print("Starting in 3 seconds")
+                sleep(3)
+
+                PocketCore = require("pocketCore")
+                PocketCore.run()
+            else
+                print("Unable to sync with server. Startup aborted")
+            end
+        end),
+    client = (function (...)
+        Relay = { peripheral.find("redstone_relay") }
+        Monitor = peripheral.find("monitor")
+        MonitorInterface = require("clientMonitorInterface") -- Handles the UI on the monitor
+        TerminalInterface = require("clientTerminalInterface") -- Handles the UI on the terminal
+        Basalt = require("basalt")
+    
+        local synced = Wireless.clientSyncDataFromServer("addresses")
+        if synced then
+            print("Successfully synced addresses with server")
+            print("Starting in 3 seconds")
+            sleep(3)
+    
+            ClientCore = require("clientCore")
+            ClientCore.run()
+        else
+            print("Unable to sync with server. Startup aborted")
+        end
+    end),
+    server = (function (...)
+        UpdateAddresses()
+        AddressBook.serverReadTableFromFile(AddressFile)
+
+        print("Starting in 3 seconds")
+        sleep(3)
+
+        SGHandler = require("stargateHandler") -- Handles everything Stargate related
+
+        ServerCore = require("serverCore")
+        ServerCore.run()
+    end)
+}
+
+parallel.waitForAll(
+    instanceStart[InstanceType],
+    Wireless.listenModemMessage
+)

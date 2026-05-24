@@ -1,19 +1,23 @@
-function readTableFromFile(fileName)
+local addressTable = {}
+
+function serverReadTableFromFile(fileName)
 	local file = fs.open(fileName, "r")
 	local data = file.readAll()
 	file.close()
 
-	return textutils.unserialize(data)
+	addressTable = textutils.unserialize(data)
 end
 
 -- Saves the Address Book
-function writeTableToFile(fileName, table)
+function serverWriteTableToFile(fileName, table)
 	local file = fs.open(fileName, "w")
 	file.write(textutils.serialize(table))
 	file.close()
 end
 
-local addressTable = readTableFromFile("addresses.conf") -- Addresses
+function clientSetAddressBook(newAddresses)
+	addressTable = newAddresses
+end
 
 function getAddressFromAddress(addrStr)
 	if addrStr == nil then
@@ -91,13 +95,13 @@ end
 
 function addAddress(id, address)
 	addressTable[id] = address
-	writeTableToFile("addresses.conf", addressTable)
+	srv_writeTableToFile(AddressFile, addressTable)
 end
 
 function removeAddress(id)
 	addressTable[id] = nil
 
-	writeTableToFile("addresses.conf", addressTable)
+	srv_writeTableToFile(AddressFile, addressTable)
 end
 
 function requestAddress(input, fastDial, addPoO)
@@ -118,9 +122,12 @@ end
 
 
 return {
+	serverReadTableFromFile = serverReadTableFromFile,
+	serverWriteTableToFile = serverWriteTableToFile,
+	clientSetAddressBook = clientSetAddressBook,
 	getAddressFromIDOrAddress = getAddressFromIDOrAddress,
 	getAddressBook = getAddressBook,
 	stringToTable = stringToTable,
 	addAddress = addAddress,
-	removeAddress = removeAddress,
+	removeAddress = removeAddress
 }

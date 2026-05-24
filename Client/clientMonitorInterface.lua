@@ -37,8 +37,8 @@ function createInfoTab(tabControl)
 		end
 	}
 	local infoTab = tabControl:newTab("Info")
-	:addScrollFrame({x = 1,y = 1, width = 29, height = 50, background = colors.black })
-	:loadXML([[
+		:addScrollFrame({ x = 1, y = 1, width = 29, height = 50, background = colors.black })
+		:loadXML([[
 		<label x="2" y="4" text="Stargate Status:" foreground="orange"/>
 		<label x="2" y="12" text="Iris Status:" foreground="orange"/>
 		<button x="2" y="16" width="10" height="1" text="Close" background="red" foreground="white" onClick="closeIris"/>
@@ -61,27 +61,27 @@ function createInfoTab(tabControl)
 	openTimeLabel = infoTab:addLabel({ x = 2, y = 6, text = "Open ticks:", foreground = colors.yellow })
 	statusLabel = infoTab:addLabel({ x = 2, y = 8, text = "Idle", foreground = colors.yellow })
 	displayLabel = infoTab:addLabel({ x = 2, y = 9, text = "Origin: ", foreground = colors.yellow })
-	addressLabel = infoTab:addLabel({ x = 2, y = 10, text = "Address: N/A", foreground = colors.yellow })	
-	irisLabel = infoTab:addLabel({x = 2,y = 13,text = "N/A",foreground = colors.yellow,})
-	irisDuraLabel = infoTab:addLabel({x = 2,y = 14, width=38,text = "",foreground = colors.yellow,})
+	addressLabel = infoTab:addLabel({ x = 2, y = 10, text = "Address: N/A", foreground = colors.yellow })
+	irisLabel = infoTab:addLabel({ x = 2, y = 13, text = "N/A", foreground = colors.yellow, })
+	irisDuraLabel = infoTab:addLabel({ x = 2, y = 14, width = 38, text = "", foreground = colors.yellow, })
 
-	energyLabel = infoTab:addLabel({x = 2,y = 23,text = "Gate Energy: ",foreground = colors.yellow})
-	interfaceEnergyLabel = infoTab:addLabel({x = 2,y = 24,text = "Interface Energy: ",foreground = colors.yellow})
+	energyLabel = infoTab:addLabel({ x = 2, y = 23, text = "Gate Energy: ", foreground = colors.yellow })
+	interfaceEnergyLabel = infoTab:addLabel({ x = 2, y = 24, text = "Interface Energy: ", foreground = colors.yellow })
 
 	feedbackLabel = infoTab:addLabel({ x = 2, y = 27, text = "", foreground = colors.yellow })
 end
 
-function refreshDialTab(tabControl, addressBook)
-	local dialTab = tabControl:newTab("Dial")
+function createDialTab(tabControl)
+	DialTab = tabControl:newTab("Dial")
 
 	-- Fast Dial Checkbox
-	dialTab:addLabel({
+	DialTab:addLabel({
 		x = 2,
 		y = 2,
 		text = "Fast Dial:",
 		foreground = colors.orange,
 	})
-	fastDial = dialTab:addCheckBox({
+	fastDialCheckbox = DialTab:addCheckBox({
 		x = 13,
 		y = 2,
 		text = "[ ]",
@@ -89,7 +89,7 @@ function refreshDialTab(tabControl, addressBook)
 		foreground = colors.yellow,
 	})
 
-	dialTab:addButton({
+	DialTab:addButton({
 		x = 17,
 		y = 2,
 		width = 19,
@@ -98,11 +98,31 @@ function refreshDialTab(tabControl, addressBook)
 		foreground = colors.white,
 		background = colors.red
 	})
-	:onClick(function()
-		os.queueEvent("basalt_command", "disconnect")
-	end)
+		:onClick(function()
+			os.queueEvent("basalt_command", "disconnect")
+		end)
 
-	local addressTab = dialTab:addTabControl({
+	refreshDialTab()
+end
+
+function listenBasaltAddressUpdate()
+	while true do
+		local event, data = os.pullEvent("basalt_address_update")
+
+		if DialTab == nil then
+			return
+		end
+
+		AddressTab:clear()
+
+		refreshDialTab()
+	end
+end
+
+function refreshDialTab()
+	local addressBook = AddressBook.getAddressBook()
+
+	AddressTab = DialTab:addTabControl({
 		x = 2,
 		y = 4,
 		width = 34,
@@ -112,14 +132,13 @@ function refreshDialTab(tabControl, addressBook)
 		activeTabBackground = colors.lightBlue
 	})
 
+	local localList = AddressTab:newTab("7-Chevron")
+	local galacticList = AddressTab:newTab("8-Chevron")
+	local directList = AddressTab:newTab("9-Chevron")
 
-	local localList = addressTab:newTab("7-Chevron")
-	local galacticList = addressTab:newTab("8-Chevron")
-	local directList = addressTab:newTab("9-Chevron")
-	
-	local localPos = {x = 2, y = 2}
-	local galacticPos = {x = 2, y = 2}
-	local directPos = {x = 2, y = 2}
+	local localPos = { x = 2, y = 2 }
+	local galacticPos = { x = 2, y = 2 }
+	local directPos = { x = 2, y = 2 }
 
 	for i, addr in pairs(addressBook) do
 		local addressTable = AddressBook.stringToTable(addr.address)
@@ -140,13 +159,13 @@ function refreshDialTab(tabControl, addressBook)
 					foreground = colors.white,
 					background = color
 				})
-				:onClick(function()
-					if fastDial.checked then
-						os.queueEvent("basalt_command", "fdial " .. addr.address)
-					else
-						os.queueEvent("basalt_command", "dial " .. addr.address)
-					end
-				end)
+					:onClick(function()
+						if fastDialCheckbox.checked then
+							os.queueEvent("basalt_command", "fdial " .. addr.address)
+						else
+							os.queueEvent("basalt_command", "dial " .. addr.address)
+						end
+					end)
 
 				if localPos.x == 2 then
 					localPos.x = 19
@@ -164,13 +183,13 @@ function refreshDialTab(tabControl, addressBook)
 					foreground = colors.white,
 					background = color
 				})
-				:onClick(function()
-					if fastDial.checked then
-						os.queueEvent("basalt_command", "fdial " .. addr.address)
-					else
-						os.queueEvent("basalt_command", "dial " .. addr.address)
-					end
-				end)
+					:onClick(function()
+						if fastDialCheckbox.checked then
+							os.queueEvent("basalt_command", "fdial " .. addr.address)
+						else
+							os.queueEvent("basalt_command", "dial " .. addr.address)
+						end
+					end)
 
 				if galacticPos.x == 2 then
 					galacticPos.x = 19
@@ -188,13 +207,13 @@ function refreshDialTab(tabControl, addressBook)
 					foreground = colors.white,
 					background = color
 				})
-				:onClick(function()
-					if fastDial.checked then
-						os.queueEvent("basalt_command", "fdial " .. addr.address)
-					else
-						os.queueEvent("basalt_command", "dial " .. addr.address)
-					end
-				end)
+					:onClick(function()
+						if fastDialCheckbox.checked then
+							os.queueEvent("basalt_command", "fdial " .. addr.address)
+						else
+							os.queueEvent("basalt_command", "dial " .. addr.address)
+						end
+					end)
 
 				if directPos.x == 2 then
 					directPos.x = 19
@@ -269,7 +288,7 @@ function createDebugTab(tabControl)
 		})
 		:setColumns({
 			{ name = "Chevron", width = 12 },
-			{ name = "Status", width = 8 },
+			{ name = "Status",  width = 8 },
 		})
 		:addRow("Chevron 1", "Idle")
 		:addRow("Chevron 2", "Idle")
@@ -295,16 +314,16 @@ function updateGateData() -- "data_update"
 		openTimeLabel:setText("Open Time: " .. Helpers.ticksToMinutesSeconds(data.basic.openTime))
 		irisLabel:setText(data.iris.status)
 
-		if data.iris.maxDurability > 0 then
+		if data.iris.maxDurability ~= nil and data.iris.maxDurability > 0 then
 			irisDuraLabel:setText(
-			string.format(
-				"Durability: %d%%",
-				math.floor(data.iris.durability/data.iris.maxDurability*100)
+				string.format(
+					"Durability: %d%%",
+					math.floor(data.iris.durability / data.iris.maxDurability * 100)
+				)
 			)
-		)
 		end
 
-		
+
 		energyLabel:setText(
 			string.format(
 				"Gate Energy: %s/%s",
@@ -319,7 +338,7 @@ function updateGateData() -- "data_update"
 				Helpers.convertToPowerUnits(data.basic.interfaceEnergyCapacity)
 			)
 		)
-		feedbackLabel:setText(GateFeedbackCodes[data.basic.feedbackCode])
+		feedbackLabel:setText(data.basic.feedbackCode)
 
 		--Debug Tab
 		gateGenLabel:setText("Generation: " .. GateGeneration[data.basic.generation])
@@ -339,20 +358,10 @@ function updateGateData() -- "data_update"
 	end
 end
 
-function listenBasaltChevronUpdate() -- "basalt_chevron_update"
-	while true do
-		local event, data = os.pullEvent("basalt_chevron_update")
-
-		for i, state in pairs(data) do
-			chevronTable:updateCell(i, 2, state)
-		end
-	end
-end
-
 function createInterface(basalt)
 	Monitor.setTextScale(0.5)
 
-	local x,y = Monitor.getSize()
+	local x, y = Monitor.getSize()
 
 	local main = basalt.createFrame():setTerm(Monitor)
 
@@ -367,11 +376,11 @@ function createInterface(basalt)
 	})
 
 	createInfoTab(tabControl)
-	refreshDialTab(tabControl, AddressBook.getAddressBook())
+	createDialTab(tabControl)
 	createDebugTab(tabControl)
 
 	basalt.schedule(function()
-		parallel.waitForAny(updateGateData, listenBasaltChevronUpdate)
+		parallel.waitForAny(updateGateData, refreshDialTab)
 	end)
 end
 

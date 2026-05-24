@@ -59,7 +59,7 @@ function listenStargateIncomingWormhole() -- "stargate_incoming_wormhole"
 			activeAddress = { id = "unknown", display = "Unknown", address = addrStr }
 		end
 
-		if stargate.getIris() and stargate.getIrisProgressPercentage() > 99 then
+		if stargateHasIris() and stargate.getIrisProgressPercentage() > 99 then
 			stargate.sendStargateMessage(textutils.serialize({type="msg", content="Iris closed! Identification Required"})) -- Send through the gate to the other side, if possible
 		end
 
@@ -93,7 +93,7 @@ end
 function listenStargateDisconnected() -- "stargate_disconnected"
 	while true do
 		local name, periphName, feedback, feedbackDescription = os.pullEvent("stargate_disconnected")
-		Helpers.log(string.format("Disconnected: %s", feedback))
+		Helpers.log(string.format("Disconnected: %s", Helpers.GateFeedbackCodes[feedback]))
 	end
 end
 
@@ -101,7 +101,7 @@ function listenStargateReset() -- "stargate_reset"
 	while true do
 		local name, periphName, feedback, feedbackDescription = os.pullEvent("stargate_reset")
 
-		Helpers.log(string.format("Reset: %s", feedback))
+		Helpers.log(string.format("Reset: %s", Helpers.GateFeedbackCodes[feedback]))
 		activeAddress = { display = "Not Connected", address = "" }
 		warning = ""
 
@@ -219,7 +219,7 @@ function dataUpdater()
 				interfaceEnergyCapacity = stargate.getEnergyCapacity(),
 				generation = stargate.getStargateGeneration(),
 				interface = peripheral.getType(peripheral.getName(stargate)),
-				feedbackCode = stargate.getRecentFeedback(),
+				feedbackCode = Helpers.GateFeedbackCodes[stargate.getRecentFeedback()],
 			}
 
 			local advanced = {
@@ -241,9 +241,13 @@ function dataUpdater()
 
 			local iris = {
 				status = irisStatus(),
-				durability = stargate.getIrisDurability(),
-				maxDurability = stargate.getIrisMaxDurability(),
+				
 			}
+
+			if stargateHasIris() then
+				iris.durability = stargate.getIrisDurability()
+				iris.maxDurability = stargate.getIrisMaxDurability()
+			end
 
 			os.queueEvent("data_update", {
 				activeAddress = activeAddress,
@@ -312,7 +316,7 @@ function dialStargate(addArr, isFast)
 		end
 
 		if isFast and isCrystalInterface(peripheral.getType(peripheral.getName(stargate))) then
-			stargate.engageSymbol(symbol)
+			stargate.engageSymbol(symbol, true)
 		else
 			if isRotatingStargate then
 				if getRotationDirection(lastSymbol, symbol) then
@@ -346,7 +350,7 @@ function dialStargate(addArr, isFast)
 				end
 			else
 				sleep(0.2)
-				stargate.engageSymbol(symbol)
+				stargate.engageSymbol(symbol, true)
 				sleep(0.2)
 			end
 		end
@@ -403,29 +407,33 @@ function stargateStatus()
 	end
 end
 
+function stargateHasIris()
+	if stargate and stargate.getStargateType() ~= "sgjourney:tollan_stargate" then
+		return stargate.getIris()
+	else
+		return false
+	end
+end
+
 -- returns the status of the Iris
 function irisStatus()
-	if stargate then
-		if stargate.getIris() then
-			local progress = stargate.getIrisProgressPercentage()
+	if stargateHasIris() then
+		local progress = stargate.getIrisProgressPercentage()
 
-			if progress == 0 then
-				return "Iris is open"
-			elseif progress == 100 then
-				return "The iris is fully closed"
-			else
-				return "The iris is " .. math.floor(progress) .. "% closed"
-			end
+		if progress == 0 then
+			return "Iris is open"
+		elseif progress == 100 then
+			return "The iris is fully closed"
 		else
-			return "No Iris Installed"
+			return "The iris is " .. math.floor(progress) .. "% closed"
 		end
 	else
-		return "N/A"
+		return "No Iris Installed"
 	end
 end
 
 function toggleIris(state)
-	if stargate and stargate.getIris() then
+	if stargateHasIris() then
 		if state then
 			if stargate.getIrisProgressPercentage() > 0 then
 				stargate.openIris()
@@ -498,8 +506,6 @@ function runListeners()
 		listenDialStargate,
 		dataUpdater,
 		
-
-		Wireless.listenModemMessage,
 		Wireless.listenDataUpdate,
 		ServerCore.listenRequestCommand
 	)

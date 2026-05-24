@@ -137,4 +137,7 @@ return {
 	ticksToMinutesSeconds = ticksToMinutesSeconds,
 	convertToPowerUnits = convertToPowerUnits,
 	log = log,
+	GateFeedbackCodes = GateFeedbackCodes,
+	GateGeneration = GateGeneration,
+	FilterType = FilterType
 }

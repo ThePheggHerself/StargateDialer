@@ -20,7 +20,6 @@ function run()
 	Helpers.log("Welcome to the BasaltDialer Terminal")
 
 	parallel.waitForAny(
-		Wireless.listenModemMessage,
 		listenBasaltCommand,
 		startInterfaces
 	)
