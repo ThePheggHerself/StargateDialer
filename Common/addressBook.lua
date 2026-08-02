@@ -95,13 +95,13 @@ end
 
 function addAddress(id, address)
 	addressTable[id] = address
-	srv_writeTableToFile(AddressFile, addressTable)
+	serverWriteTableToFile(AddressFile, addressTable)
 end
 
 function removeAddress(id)
 	addressTable[id] = nil
 
-	srv_writeTableToFile(AddressFile, addressTable)
+	serverWriteTableToFile(AddressFile, addressTable)
 end
 
 function requestAddress(input, fastDial, addPoO)

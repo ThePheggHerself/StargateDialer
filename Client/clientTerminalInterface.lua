@@ -12,19 +12,23 @@ local restrictedCheckbox = nil
 
 function saveAddress()
 	if addressInput ~= nil then
-		AddressBook.addAddress(idInput:getText(), {
+		Wireless.transmitMessage({type = "address_creation", content = 
+		{
 			address = addressInput:getText(),
 			id = idInput:getText(),
 			display = displayInput:getText(),
-			category = categoryInput:getText(),
 			hidden = hiddenCheckbox.checked,
 			security = {
 				irisAutoOpen = irisAutoOpenCheckbox.checked,
 				sirens = sirensCheckbox.checked,
 				restricted = restrictedCheckbox.checked,
 			},
-		})
+		} })
 	end
+end
+
+function resyncAddresses()
+	Wireless.clientSyncDataFromServer("addresses")
 end
 
 function listenConsoleLogRequest()
@@ -54,12 +58,6 @@ end
 function createAddressTab(tabControl)
 	local addressTab = tabControl:newTab("Address")
 
-	scope = {
-		handleSave = function(self)
-            saveAddress()
-        end
-	}
-
 	-- addressTab:loadXML([[
     --     <label x="2" y="2" text="Address:" foreground="orange" />
     --     <label x="2" y="4" text="Id:" foreground="orange" />
@@ -75,52 +73,47 @@ function createAddressTab(tabControl)
     --     <button text="Save" x="2" y="16" height="1" background="green" onClick="handleSave"/>
     -- ]], scope)
 
-    addressTab:addLabel({x=2,y=2,text="Address:",foreground=colors.orange})
-    addressTab:addLabel({x=2,y=4,text="Id:",foreground=colors.orange})
-    addressTab:addLabel({x=17,y=4,text="Display:",foreground=colors.orange})
-    addressTab:addLabel({x=2,y=6,text="Category",foreground=colors.orange})
-    addressTab:addLabel({x=32,y=6,text="Hidden",foreground=colors.orange})
+	addressTab:addLabel({x=2,y=2,text="Address Details",foreground=colors.orange})
+    addressTab:addLabel({x=2,y=3,text="Address:",foreground=colors.yellow})
+    addressTab:addLabel({x=2,y=5,text="Id:",foreground=colors.yellow})
+    addressTab:addLabel({x=17,y=5,text="Display:",foreground=colors.yellow})
+    addressTab:addLabel({x=2,y=7,text="Hidden Address:",foreground=colors.yellow})
 
-    addressTab:addLabel({x=2,y=8,text="Security",foreground=colors.orange})
-    addressTab:addLabel({x=2,y=9,text="Iris Auto Open:",foreground=colors.orange})
-    addressTab:addLabel({x=25,y=9,text="Sirens:",foreground=colors.orange})
-    addressTab:addLabel({x=2,y=10,text="Restricted:",foreground=colors.orange})
+    addressTab:addLabel({x=2,y=9,text="Security",foreground=colors.orange})
+    addressTab:addLabel({x=2,y=10,text="Iris Auto Open:",foreground=colors.yellow})
+    addressTab:addLabel({x=25,y=10,text="Sirens:",foreground=colors.yellow})
+    addressTab:addLabel({x=2,y=11,text="Restricted:",foreground=colors.yellow})
 
-    addressTab:addButton({x=2,y=16,text="Save",height=1,background=colors.green})
+    addressTab:addButton({x=2,y=17,text="Save",height=1,background=colors.green})
         :onClick(function(self, checked) saveAddress() end)
+
+	addressTab:addButton({x=41,y=17,text="Resync",height=1,background=cyan})
+        :onClick(function(self, checked) resyncAddresses() end)
 
 	addressInput = addressTab:addInput({
 		x = 11,
-		y = 2,
+		y = 3,
 		width = 30,
 		background = colors.gray,
 		foreground = colors.white,
 	})
 	idInput = addressTab:addInput({
 		x = 6,
-		y = 4,
+		y = 5,
 		width = 10,
 		background = colors.gray,
 		foreground = colors.white,
 	})
 	displayInput = addressTab:addInput({
 		x = 26,
-		y = 4,
+		y = 5,
 		width = 14,
 		background = colors.gray,
 		foreground = colors.white,
 	})
-	categoryInput = addressTab:addInput({
-		x = 12,
-		y = 6,
-		width = 17,
-		background = colors.gray,
-		foreground = colors.white,
-	})
-
 	hiddenCheckbox = addressTab:addCheckBox({
-		x = 40,
-		y = 6,
+		x = 18,
+		y = 7,
 		background = colors.gray,
 		foreground = colors.white,
 		text = "[ ]",
@@ -128,7 +121,7 @@ function createAddressTab(tabControl)
 	})
 	irisAutoOpenCheckbox = addressTab:addCheckBox({
 		x = 18,
-		y = 9,
+		y = 10,
 		background = colors.gray,
 		foreground = colors.white,
 		text = "[ ]",
@@ -136,7 +129,7 @@ function createAddressTab(tabControl)
 	})
 	sirensCheckbox = addressTab:addCheckBox({
 		x = 33,
-		y = 9,
+		y = 10,
 		background = colors.gray,
 		foreground = colors.white,
 		text = "[ ]",
@@ -144,7 +137,7 @@ function createAddressTab(tabControl)
 	})
 	restrictedCheckbox = addressTab:addCheckBox({
 		x = 14,
-		y = 10,
+		y = 11,
 		background = colors.gray,
 		foreground = colors.white,
 		text = "[ ]",
@@ -193,13 +186,10 @@ function createInterface(basalt)
     createConsoleTab(tabControl)
 	createAddressTab(tabControl)
 	--createAddressListTab(tabControl)
-	
-
-	basalt.schedule(function()
-		parallel.waitForAny(listenConsoleLogRequest, listenInput)
-	end)
 end
 
 return {
+	listenConsoleLogRequest = listenConsoleLogRequest,
+	listenInput = listenInput,
 	createInterface = createInterface,
 }

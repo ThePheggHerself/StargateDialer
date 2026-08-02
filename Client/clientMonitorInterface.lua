@@ -122,6 +122,10 @@ end
 function refreshDialTab()
 	local addressBook = AddressBook.getAddressBook()
 
+	if AddressTab ~= nil then
+		AddressTab:destroy()
+	end
+
 	AddressTab = DialTab:addTabControl({
 		x = 2,
 		y = 4,
@@ -346,7 +350,7 @@ function updateGateData() -- "data_update"
 
 		if data.advanced.available then
 			localAddressLabel:setText(data.advanced.localAddress)
-			networkLabel:setText("Network: " .. data.advanced.network)
+			networkLabel:setText("Networks: [" .. table.concat(data.advanced.network, ", ").. "]")
 		else
 			localAddressLabel:setText("Unavailable")
 			networkLabel:setText("Network: Unavailable")
@@ -378,13 +382,10 @@ function createInterface(basalt)
 	createInfoTab(tabControl)
 	createDialTab(tabControl)
 	createDebugTab(tabControl)
-
-	basalt.schedule(function()
-		parallel.waitForAny(updateGateData, refreshDialTab)
-	end)
 end
 
 return {
 	createInterface = createInterface,
-	updateGateData = updateGateData
+	updateGateData = updateGateData,
+	listenBasaltAddressUpdate = listenBasaltAddressUpdate
 }

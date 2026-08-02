@@ -1,7 +1,6 @@
 local stargate = peripheral.find("advanced_crystal_interface")
 	or peripheral.find("crystal_interface")
 	or peripheral.find("basic_interface")
-local transceiver = peripheral.find("transceiver")
 
 local activeAddress = { display = "", address = "" }
 local warning = ""
@@ -18,17 +17,19 @@ local chevronTable = {
 	[9] = "idle",
 }
 
+
+-- Event Listeners
+
 function listenStargateChevronEngaged() -- "stargate_chevron_engaged"
 	while true do
 		local name, periphName, chevronCount, engagedChevron, incomingConnection, encodedSymbol =
 			os.pullEvent("stargate_chevron_engaged")
-
 		if incomingConnection and engagedChevron == 1 then -- Start of an incoming connection
 			Helpers.log("WARNING! Incoming Connection!")
 			warning = "Offworld Activation!"
 
 			toggleIris(false)
-			--toggleRelays(true) -- Toggle alarms and sirens
+			RedstoneRelay.SetOutput(true) -- Toggle alarms and sirens
 		end
 
 		chevronText = "Encoded"
@@ -42,24 +43,46 @@ function listenStargateChevronEngaged() -- "stargate_chevron_engaged"
 	end
 end
 
+function listenStargateIncomingConnection() -- "stargate_incoming_connection"
+	while true do
+		local name, peripheralName = os.pullEvent("stargate_incoming_connection")
+
+		CreateDisplayLink.UpdateDisplay({content = "WARNING", xPos = 13 }, {content = "Incoming Connection", xPos = 7})
+	end
+end
+
 function listenStargateIncomingWormhole() -- "stargate_incoming_wormhole"
 	while true do
 		local name, periphName, addressTable = os.pullEvent("stargate_incoming_wormhole")
 
 		Helpers.log("Incoming wormhole Formed")
-
 		local addrStr = stargate.addressToString(addressTable)
-		local address = AddressBook.getAddressFromIDOrAddress(addrStr)
-
-		if address.id then
-			Helpers.log(string.format("Origin: %s (%s)", address.address, address.display))
-			activeAddress = address
-		else
+		
+		if addrStr == nil then
 			Helpers.log(string.format("Origin: %s (Unknown)", addrStr))
 			activeAddress = { id = "unknown", display = "Unknown", address = addrStr }
+
+			CreateDisplayLink.UpdateDisplay({content = "Incoming Wormhole", xPos = 7}, {content = "Origin Unavailable", xPos = 7 })
+		
+		else
+
+		
+			local address = AddressBook.getAddressFromIDOrAddress(addrStr)
+
+			if address.id then
+				Helpers.log(string.format("Origin: %s (%s)", address.address, address.display))
+				activeAddress = address
+
+				CreateDisplayLink.UpdateDisplay({content = "Incoming Wormhole", xPos = 7}, {content = address.display, xPos = 7 })
+			else
+				Helpers.log(string.format("Origin: %s (%s)", address.address, address.display))
+				activeAddress = address
+
+				CreateDisplayLink.UpdateDisplay({content = "Incoming Wormhole", xPos = 7}, {content = address.address, xPos = 7 })
+			end
 		end
 
-		if stargateHasIris() and stargate.getIrisProgressPercentage() > 99 then
+		if stargate.getIris ~= nil and stargate.getIrisProgressPercentage() > 99 then
 			stargate.sendStargateMessage(textutils.serialize({type="msg", content="Iris closed! Identification Required"})) -- Send through the gate to the other side, if possible
 		end
 
@@ -75,7 +98,7 @@ function listenStargateIncomingWormhole() -- "stargate_incoming_wormhole"
 			end
 
 			if not address.sirens then
-				--toggleRelays(false)
+				RedstoneRelay.SetOutput(false) -- Toggle alarms and sirens
 			end
 		end
 	end
@@ -85,8 +108,12 @@ function listenStargateOutgoingWormhole() -- "stargate_outgoing_wormhole"
 	while true do
 		local name, periphName, address = os.pullEvent("stargate_outgoing_wormhole")
 
+		
+
+		CreateDisplayLink.UpdateDisplay({content = "Outgoing Wormhole", xPos = 7}, {content = stargate.addressToString(address), xPos = 7 })
+
 		Helpers.log("Outgoing wormhole Formed")
-		--Helpers.toggleRelays(true)
+		-- RedstoneRelay.SetOutput(true) -- Toggle alarms and sirens
 	end
 end
 
@@ -105,7 +132,8 @@ function listenStargateReset() -- "stargate_reset"
 		activeAddress = { display = "Not Connected", address = "" }
 		warning = ""
 
-		--toggleRelays(false)
+		CreateDisplayLink.UpdateDisplay({content = "Stargate Idle", xPos = 10}, {content = "Not Connected", xPos = 10 })
+		RedstoneRelay.SetOutput(true) -- Toggle alarms and sirens
 
 		chevronTable = {
 			[1] = "idle",
@@ -156,51 +184,26 @@ function listenStargateMessageRecieved() -- "stargate_message_received"
 	end
 end
 
-function isIDCValid(freq, code,	validOverride)
-	if validOverride then
-		return true, "Override"
-	elseif Settings.ExtraIDCs ~= nil then
-		for i, c in pairs(Settings.ExtraIDCs) do
-			if c.Code == code then
-				return true, c.Name
-			end
-		end
-	else
-		local address = AddressBook.getAddressFromIDOrAddress(stargate.addressToString(stargate.getConnectedAddress()))
-
-		if address.security.IDC and address.security.IDC == code then
-			return true, "Local"
-		end
-		return false, ""
-	end
-end
-
 function listenTransmissionRecieved()
 	while true do
 		local name, periphName, freq, code, validOverride = os.pullEvent("transceiver_transmission_received")
-
-		Helpers.log(string.format("[GDO] IDC %s recieved on frequency %s", code, freq))
-
-		if not stargate.isWormholeOpen() then
-			Helpers.log("[GDO] IDC recieved but unsafe request. Waiting...")
-
-			while not stargate.isWormholeOpen() do
-				sleep(0.5)
-			end
-
-			Helpers.log("[GDO] Wormhole stabalized")
-		end
-
-		local isValid, codeName = isIDCValid(freq, code, validOverride)
-
-		if isValid then
-			Helpers.log(string.format("[GDO] Valid IDC: %s (%s)", codeName, code))
-			toggleIris(true)
-		else
-			Helpers.log("[GDO] Invalid IDC")
-		end
+		StargateTransceiver.ListenTransmissionRecieved(name, periphName, freq, code, validOverride)
 	end
 end
+
+function listenDialStargate()
+	while true do
+		local event, address, isFast = os.pullEvent("dial_stargate")
+
+		activeAddress = AddressBook.getAddressFromIDOrAddress(address)
+
+		CreateDisplayLink.UpdateDisplay({content = "Dialing", xPos = 13}, {content = address, xPos = 7 })
+		dialStargate(AddressBook.stringToTable(address), isFast)
+	end
+end
+
+
+-- Loop Routines
 
 function dataUpdater()
 	while true do
@@ -230,7 +233,7 @@ function dataUpdater()
 				advanced = {
 					available = true,
 					localAddress = stargate.addressToString(stargate.getLocalAddress()),
-					network = stargate.getNetwork(),
+					network = stargate.getNetworks(),
 				}
 			end
 
@@ -244,7 +247,7 @@ function dataUpdater()
 				
 			}
 
-			if stargateHasIris() then
+			if stargate.getIris ~= nil then
 				iris.durability = stargate.getIrisDurability()
 				iris.maxDurability = stargate.getIrisMaxDurability()
 			end
@@ -259,6 +262,28 @@ function dataUpdater()
 				advanced = advanced,
 			})
 		end
+	end
+end
+
+
+-- Functions
+
+function isIDCValid(freq, code,	validOverride)
+	if validOverride then
+		return true, "Override"
+	elseif Settings.ExtraIDCs ~= nil then
+		for i, c in pairs(Settings.ExtraIDCs) do
+			if c.Code == code then
+				return true, c.Name
+			end
+		end
+	else
+		local address = AddressBook.getAddressFromIDOrAddress(stargate.addressToString(stargate.getConnectedAddress()))
+
+		if address.security.IDC and address.security.IDC == code then
+			return true, "Local"
+		end
+		return false, ""
 	end
 end
 
@@ -287,25 +312,12 @@ function abortOrDisconnect()
 	end
 end
 
-function listenDialStargate()
-	while true do
-		local event, address, isFast = os.pullEvent("dial_stargate")
-
-		activeAddress = AddressBook.getAddressFromIDOrAddress(address)
-
-		dialStargate(AddressBook.stringToTable(address), isFast)
-	end
-end
-
 function dialStargate(addArr, isFast)
 	local index = 0
 	local lastSymbol = 0
-	local isRotatingStargate = isRotatingStargate()
 
-	if isRotatingStargate then
-		if stargate.getCurrentSymbol() ~= nil then
-			lastSymbol = stargate.getCurrentSymbol()
-		end
+	if stargate.rotateClockwise ~= nil and stargate.getCurrentSymbol ~= nil then
+		lastSymbol = stargate.getCurrentSymbol()
 	end
 
 	for _, symbol in pairs(addArr) do
@@ -315,10 +327,10 @@ function dialStargate(addArr, isFast)
 			break
 		end
 
-		if isFast and isCrystalInterface(peripheral.getType(peripheral.getName(stargate))) then
-			stargate.engageSymbol(symbol, true)
+		if isFast and stargate.engageSymbol ~= nil then
+			stargate.engageSymbol(symbol)
 		else
-			if isRotatingStargate then
+			if stargate.rotateClockwise then
 				if getRotationDirection(lastSymbol, symbol) then
 					stargate.rotateClockwise(symbol)
 				else
@@ -338,21 +350,20 @@ function dialStargate(addArr, isFast)
 					break
 				end
 
-				if stargate.getStargateType() == "sgjourney:milky_way_stargate" then
-					sleep(0.2)
+				if stargate.openChevron ~= nil then
 					stargate.openChevron()
 					sleep(0.2)
 					stargate.closeChevron()
-					sleep(0.2)
 				else
 					stargate.encodeChevron()
-					sleep(0.2)
 				end
 			else
-				sleep(0.2)
 				stargate.engageSymbol(symbol, true)
-				sleep(0.2)
 			end
+		end
+
+		if symbol == 0 then
+			stargate.engageStargate()
 		end
 
 		index = index + 1
@@ -373,15 +384,6 @@ function getRotationDirection(current, symbol)
 	else
 		return diff2 < 1
 	end
-end
-
--- Is the gate capable of rotating
-function isRotatingStargate()
-	local stargateType = stargate.getStargateType()
-
-	return stargateType == "sgjourney:milky_way_stargate"
-		or stargateType == "sgjourney:universe_stargate"
-		or stargateType == "sgjourney:classic_stargate"
 end
 
 -- Returns the status of the gate
@@ -407,17 +409,9 @@ function stargateStatus()
 	end
 end
 
-function stargateHasIris()
-	if stargate and stargate.getStargateType() ~= "sgjourney:tollan_stargate" then
-		return stargate.getIris()
-	else
-		return false
-	end
-end
-
 -- returns the status of the Iris
 function irisStatus()
-	if stargateHasIris() then
+	if stargate.getIris ~= nil then
 		local progress = stargate.getIrisProgressPercentage()
 
 		if progress == 0 then
@@ -433,7 +427,7 @@ function irisStatus()
 end
 
 function toggleIris(state)
-	if stargateHasIris() then
+	if stargate.getIris ~= nil then
 		if state then
 			if stargate.getIrisProgressPercentage() > 0 then
 				stargate.openIris()
@@ -481,20 +475,12 @@ function isAdvancedInterface(interfaceString)
 	end
 end
 
--- Checks of the stargate interface is a (advanced) crystal interface
-function isCrystalInterface(interfaceString)
-	if
-		string.find(interfaceString, "advanced_crystal_interface") or string.find(interfaceString, "crystal_interface")
-	then
-		return true
-	else
-		return false
-	end
-end
-
 function runListeners()
+	CreateDisplayLink.UpdateDisplay({content = "Stargate Idle", xPos = 10}, {content = "Not Connected", xPos = 10 })
+
 	parallel.waitForAny(
 		listenStargateChevronEngaged,
+		listenStargateIncomingConnection,
 		listenStargateIncomingWormhole,
 		listenStargateOutgoingWormhole,
 		listenStargateDisconnected,
@@ -515,9 +501,7 @@ return {
 	references = References,
 	stargate = stargate,
 	runListeners = runListeners,
-
 	dialStargate = dialStargate,
-	isRotatingStargate = isRotatingStargate,
 	stargateStatus = stargateStatus,
 	irisStatus = irisStatus,
 	toggleIris = toggleIris,

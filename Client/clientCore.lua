@@ -20,6 +20,10 @@ function run()
 	Helpers.log("Welcome to the BasaltDialer Terminal")
 
 	parallel.waitForAny(
+		MonitorInterface.updateGateData,
+		MonitorInterface.listenBasaltAddressUpdate,
+		TerminalInterface.listenConsoleLogRequest,
+		TerminalInterface.listenInput,
 		listenBasaltCommand,
 		startInterfaces
 	)

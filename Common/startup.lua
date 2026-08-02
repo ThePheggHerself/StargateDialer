@@ -64,6 +64,7 @@ LoadSettings()
 AddressBook = require("addressBook")
 Wireless = require("wirelessHandler")
 Helpers = require("helpers")
+require("peripherals")
 
 local function Startup()
     
@@ -71,35 +72,39 @@ end
 
 local instanceStart = {
     pocket = (function(...)
-            PocketInterface = require("pocketInterface")
-            Basalt = require("basalt")
+        PocketInterface = require("pocketInterface")
+        Basalt = require("basalt")
 
-            print("Syncing data with server")
-            local synced = Wireless.clientSyncDataFromServer("addresses")
+        print("Waiting 3 seconds to sync")
 
-            if synced then
-                print("Successfully synced addresses with server")
-                print("Starting in 3 seconds")
-                sleep(3)
+        sleep(3)
 
-                PocketCore = require("pocketCore")
-                PocketCore.run()
+        print("Syncing data with server")
+        local synced = Wireless.clientSyncDataFromServer("addresses")
+
+        if synced then
+            print("Successfully synced addresses with server")
+
+            PocketCore = require("pocketCore")
+            PocketCore.run()
             else
                 print("Unable to sync with server. Startup aborted")
             end
         end),
     client = (function (...)
-        Relay = { peripheral.find("redstone_relay") }
         Monitor = peripheral.find("monitor")
         MonitorInterface = require("clientMonitorInterface") -- Handles the UI on the monitor
         TerminalInterface = require("clientTerminalInterface") -- Handles the UI on the terminal
         Basalt = require("basalt")
-    
+
+        print("Waiting 3 seconds to sync")
+
+        sleep(3)
+
+        print("Syncing data with server")    
         local synced = Wireless.clientSyncDataFromServer("addresses")
         if synced then
             print("Successfully synced addresses with server")
-            print("Starting in 3 seconds")
-            sleep(3)
     
             ClientCore = require("clientCore")
             ClientCore.run()
@@ -110,9 +115,6 @@ local instanceStart = {
     server = (function (...)
         UpdateAddresses()
         AddressBook.serverReadTableFromFile(AddressFile)
-
-        print("Starting in 3 seconds")
-        sleep(3)
 
         SGHandler = require("stargateHandler") -- Handles everything Stargate related
 

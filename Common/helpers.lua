@@ -116,21 +116,6 @@ function log(msg)
 	end
 end
 
-function toggleRelays(state)
-	local Relay = { peripheral.find("redstone_relay") }
-
-	if Relay then
-		for _, relay in pairs(Relay) do
-			relay.setOutput("top", state)
-			relay.setOutput("bottom", state)
-			relay.setOutput("front", state)
-			relay.setOutput("back", state)
-			relay.setOutput("left", state)
-			relay.setOutput("right", state)
-		end
-	end
-end
-
 return {
 	resetTerminal = resetTerminal,
 	roundDecimal = roundDecimal,

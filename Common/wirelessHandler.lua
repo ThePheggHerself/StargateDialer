@@ -1,4 +1,4 @@
-local modem = peripheral.find("modem", isWireless)
+local modem = peripheral.find("modem")
 
 LastHeartbeat = os.time("utc")
 
@@ -9,6 +9,8 @@ SyncableData = {
 		end),
 		clientFunc = (function(...)
 			local addresses = ...
+
+			print(addresses)
 			
 			AddressBook.clientSetAddressBook(addresses)
 			os.queueEvent("basalt_address_update")
@@ -62,6 +64,15 @@ ModemMessages = {
 		func = (function (...)
 			local msgTable = ...
 			Helpers.log(msgTable.content)
+		end)
+	},
+	address_creation = {
+		Instance = "server",
+		func = (function (...)
+			local addressTbl = ...
+
+			print("Saving new address: " .. addressTbl.content.id)
+			AddressBook.addAddress(addressTbl.content.id, addressTbl.content)
 		end)
 	}
 }
@@ -143,11 +154,7 @@ end
 function transmitMessage(content)
     if modem then
 		content.timestamp = os.time("utc")
-
-		if content.type == "sync_response_from_server" then
-		print(textutils.serialize(content))
-		end
-
+		
 		if InstanceType == "server" then	
 			modem.transmit(Settings.ClientListenPort, Settings.ServerListenPort, textutils.serialize(content))
 		else
