@@ -328,7 +328,7 @@ function dialStargate(addArr, isFast)
 		end
 
 		if isFast and stargate.engageSymbol ~= nil then
-			stargate.engageSymbol(symbol)
+			stargate.engageSymbol(symbol, true, true)
 		else
 			if stargate.rotateClockwise then
 				if getRotationDirection(lastSymbol, symbol) then
