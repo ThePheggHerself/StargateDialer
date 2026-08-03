@@ -50,15 +50,24 @@ StargateTransceiver = {
 RedstoneRelay = {
     Relays = { peripheral.find("redstone_relay") },
     SetOutput = function (outputState)
-        if Relay then
-            for _, relay in pairs(Relays) do
-                relay.setOutput("top", state)
-                relay.setOutput("bottom", state)
-                relay.setOutput("front", state)
-                relay.setOutput("back", state)
-                relay.setOutput("left", state)
-                relay.setOutput("right", state)
+        if #RedstoneRelay.Relays > 0 then
+            for _, relay in pairs(outputState) do
+                relay.setOutput("top", outputState)
+                relay.setOutput("bottom", outputState)
+                relay.setOutput("front", outputState)
+                relay.setOutput("back", outputState)
+                relay.setOutput("left", outputState)
+                relay.setOutput("right", outputState)
             end
+        end
+    end
+}
+
+ChatBox = {
+    Chatbox = peripheral.find("chat_box"),
+    SendToast = function (message)
+        if ChatBox.Chatbox then
+            ChatBox.Chatbox.sendToastToPlayer(message, "Stargate Dialer", "PheWitch", "&4&lWarning", "()", "&c&l")
         end
     end
 }

@@ -48,6 +48,7 @@ function listenStargateIncomingConnection() -- "stargate_incoming_connection"
 		local name, peripheralName = os.pullEvent("stargate_incoming_connection")
 
 		CreateDisplayLink.UpdateDisplay({content = "WARNING", xPos = 13 }, {content = "Incoming Connection", xPos = 7})
+		ChatBox.SendToast("Incoming Connection")
 	end
 end
 
@@ -63,22 +64,24 @@ function listenStargateIncomingWormhole() -- "stargate_incoming_wormhole"
 			activeAddress = { id = "unknown", display = "Unknown", address = addrStr }
 
 			CreateDisplayLink.UpdateDisplay({content = "Incoming Wormhole", xPos = 7}, {content = "Origin Unavailable", xPos = 7 })
-		
+			ChatBox.SendToast("Incoming Wormhole! Origin: Unavailable")
 		else
 
 		
 			local address = AddressBook.getAddressFromIDOrAddress(addrStr)
 
-			if address.id then
+			if address.id ~= nil then
 				Helpers.log(string.format("Origin: %s (%s)", address.address, address.display))
 				activeAddress = address
 
 				CreateDisplayLink.UpdateDisplay({content = "Incoming Wormhole", xPos = 7}, {content = address.display, xPos = 7 })
+				ChatBox.SendToast("Incoming Wormhole! Origin: " .. address.id)
 			else
 				Helpers.log(string.format("Origin: %s (%s)", address.address, address.display))
 				activeAddress = address
 
 				CreateDisplayLink.UpdateDisplay({content = "Incoming Wormhole", xPos = 7}, {content = address.address, xPos = 7 })
+				ChatBox.SendToast("Incoming Wormhole! Origin: " .. address.address)
 			end
 		end
 
@@ -146,6 +149,11 @@ function listenStargateReset() -- "stargate_reset"
 			[8] = "idle",
 			[9] = "idle",
 		}
+
+		for _, symbol in pairs(RemappedSymbols) do
+			stargate.remapSymbol(symbol.oldSymbol, symbol.oldSymbol)
+			Helpers.log("Remapping " .. symbol.oldSymbol .. " to " .. symbol.oldSymbol)
+		end
 	end
 end
 
@@ -312,12 +320,23 @@ function abortOrDisconnect()
 	end
 end
 
+RemappedSymbols = {}
+
 function dialStargate(addArr, isFast)
 	local index = 0
 	local lastSymbol = 0
 
+	local remapOptions = { true, true, true, true, true, true, true, true}
+	local remapIndex = 1
+
 	if stargate.rotateClockwise ~= nil and stargate.getCurrentSymbol ~= nil then
 		lastSymbol = stargate.getCurrentSymbol()
+	end
+
+	for _, symbol in pairs(addArr) do
+		if symbol < 9 then
+			remapOptions[symbol] = false
+		end
 	end
 
 	for _, symbol in pairs(addArr) do
@@ -325,6 +344,22 @@ function dialStargate(addArr, isFast)
 			Helpers.log("Dial sequence aborted")
 			stargate.disconnectStargate()
 			break
+		end
+
+		if stargate.getStargateGeneration() == 1 and symbol > 35 then
+			::remap::
+			if remapOptions[remapIndex] == true then
+				Helpers.log("Remapping " .. remapIndex .. " to " .. symbol)
+				table.insert(RemappedSymbols, {oldSymbol = remapIndex, newSymbol = symbol})
+				stargate.remapSymbol(remapIndex, symbol)
+				sleep(0.2)
+
+				symbol = remapIndex
+				remapIndex = remapIndex+1		
+			else
+				remapIndex = remapIndex+1
+				goto remap
+			end
 		end
 
 		if isFast and stargate.engageSymbol ~= nil then
@@ -357,14 +392,18 @@ function dialStargate(addArr, isFast)
 				else
 					stargate.encodeChevron()
 				end
+
+				if symbol == 0 then
+					stargate.engageStargate()
+				end
 			else
 				stargate.engageSymbol(symbol, true)
 			end
+
+			
 		end
 
-		if symbol == 0 then
-			stargate.engageStargate()
-		end
+
 
 		index = index + 1
 	end
