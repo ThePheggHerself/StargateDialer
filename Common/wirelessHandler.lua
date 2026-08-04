@@ -67,7 +67,7 @@ ModemMessages = {
 		func = (function (...)
 			local addressTbl = ...
 
-			print("Saving new address: " .. addressTbl.content.id)
+			print(textutils.serialise(addressTbl.content))
 			AddressBook.addAddress(addressTbl.content.id, addressTbl.content)
 		end)
 	}

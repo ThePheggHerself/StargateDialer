@@ -293,7 +293,7 @@ function isIDCValid(freq, code,	validOverride)
 		local address = AddressBook.getAddressFromIDOrAddress(stargate.addressToString(stargate.getConnectedAddress()))
 
 		if address.security.IDC and address.security.IDC == code then
-			return true, "Local"
+			return true, "Address IDC"
 		end
 		return false, ""
 	end
@@ -551,6 +551,7 @@ return {
 	stargateStatus = stargateStatus,
 	irisStatus = irisStatus,
 	toggleIris = toggleIris,
+	isIDCValid = isIDCValid,
 	setGateEnergyTarget = setGateEnergyTarget,
 	abortOrDisconnect = abortOrDisconnect,
 }

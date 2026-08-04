@@ -36,7 +36,7 @@ StargateTransceiver = {
 			Helpers.log("[GDO] Wormhole stabalized")
 		end
 
-		local isValid, codeName = isIDCValid(freq, code, matchingIDC)
+		local isValid, codeName = SGHandler.isIDCValid(freq, code, matchingIDC)
 
 		if isValid then
 			Helpers.log(string.format("[GDO] Valid IDC: %s (%s)", codeName, code))
