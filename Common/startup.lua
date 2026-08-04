@@ -64,7 +64,9 @@ LoadSettings()
 AddressBook = require("addressBook")
 Wireless = require("wirelessHandler")
 Helpers = require("helpers")
+Strings = require "cc.strings"
 require("peripherals")
+
 
 local function Startup()
     

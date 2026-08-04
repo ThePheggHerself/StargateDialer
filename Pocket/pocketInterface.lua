@@ -40,7 +40,7 @@ function createDialTab(main, addressBook)
 		text = "Fast",
 		foreground = colors.orange,
 	})
-	fastDial = main:addCheckBox({
+	fastDial = main:addCheckbox({
 		x = 8,
 		y = 1,
 		text = "[ ]",
@@ -84,9 +84,9 @@ function refreshDialTab(addressBook)
 	
 	addressTab:clear()
 
-	local localList = addressTab:newTab("7-Chev")
-	local galacticList = addressTab:newTab("8-Chev")
-	local directList = addressTab:newTab("9-Chev")
+	local localList = addressTab:addTab("7-Chev")
+	local galacticList = addressTab:addTab("8-Chev")
+	local directList = addressTab:addTab("9-Chev")
 
 	local localPos = {x = 2, y = 2}
 	local galacticPos = {x = 2, y = 2}
@@ -162,7 +162,7 @@ function refreshDialTab(addressBook)
 end
 
 function createDebugTab(tabControl)
-	local debugTab = tabControl:newTab("Debug")
+	local debugTab = tabControl:addTab("Debug")
 
 	debugTab:addLabel({
 		x = 1,

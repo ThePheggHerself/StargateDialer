@@ -9,8 +9,6 @@ SyncableData = {
 		end),
 		clientFunc = (function(...)
 			local addresses = ...
-
-			print(addresses)
 			
 			AddressBook.clientSetAddressBook(addresses)
 			os.queueEvent("basalt_address_update")
@@ -46,8 +44,6 @@ ModemMessages = {
 		NotInstance = "server",
 		func = (function(...)
 			local msgTable = ...
-
-			print("Sync response:", msgTable.content.name)
 
 			os.queueEvent("client_sync_response", msgTable.content.name, msgTable.content.data)
 		end)

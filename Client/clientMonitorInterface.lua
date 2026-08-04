@@ -1,3 +1,7 @@
+MonitorUI = {
+	AddressFrame = nil
+}
+
 local basaltInit = false
 --Info Tab
 local warningLabel = nil
@@ -21,7 +25,7 @@ local localAddressLabel = nil
 local networkLabel = nil
 local fastDialCheckbox = nil
 
-function createInfoTab(tabControl)
+function createInfoTab(tabControl, xml)
 	local scope = {
 		closeIris = function(self)
 			os.queueEvent("basalt_command", "iris close")
@@ -36,24 +40,30 @@ function createInfoTab(tabControl)
 			os.queueEvent("basalt_command", "togglealarms false")
 		end
 	}
-	local infoTab = tabControl:newTab("Info")
-		:addScrollFrame({ x = 1, y = 1, width = 29, height = 50, background = colors.black })
-		:loadXML([[
-		<label x="2" y="4" text="Stargate Status:" foreground="orange"/>
-		<label x="2" y="12" text="Iris Status:" foreground="orange"/>
-		<button x="2" y="16" width="10" height="1" text="Close" background="red" foreground="white" onClick="closeIris"/>
-		<button x="14" y="16" width="10" height="1" text="Open" background="green" foreground="white" onClick="openIris"/>
+	local infoTab = tabControl:addTab("Info")
+		:addFrame({
+			x = 1,
+			y = 1,
+			width = 29,
+			height = 50,
+			background = colors.black,
+			scrollable = true,
+			scrollbar = "auto"
+		})
 
-		<label x="2" y="18" text="Controls:"/>
-		<button x="2" y="20" width="13" height="1" text="Disconnect" background="red" foreground="white" onClick="disconnect"/>
-		<button x="16" y="20" width="10" height="1" text="Sirens" background="red" foreground="white" onClick="toggleSirens"/>
+	xml.load(infoTab, [[
+		<label x="2" y="4" text="Stargate Status:" foreground="#F2B233"/>
+		<label x="2" y="12" text="Iris Status:" foreground="#F2B233"/>
+		<button x="2" y="16" width="10" height="1" text="Close" background="#CC4C4C" foreground="#F0F0F0" onClick="closeIris"/>
+		<button x="14" y="16" width="10" height="1" text="Open" background="#57A64E" foreground="#F0F0F0" onClick="openIris"/>
 
+		<label x="2" y="18" text="Iris Controls:" foreground="#F2B233"/>
+		<button x="2" y="20" width="13" height="1" text="Disconnect" background="#CC4C4C" foreground="#F0F0F0" onClick="disconnect"/>
+		<button x="16" y="20" width="10" height="1" text="Sirens" background="#CC4C4C" foreground="#F0F0F0" onClick="toggleSirens"/>
 
-		<label x="2" y="22" text="Energy Info" foreground="orange"/>
+		<label x="2" y="22" text="Energy Info" foreground="#F2B233"/>
 
-		
-
-		<label x="2" y="26" text="Feedback Status:" foreground="orange"/>
+		<label x="2" y="26" text="Feedback Status:" foreground="#F2B233"/>
 	]], scope)
 
 	warningLabel = infoTab:addLabel({ x = 2, y = 2, foreground = colors.red, text = "" })
@@ -72,7 +82,7 @@ function createInfoTab(tabControl)
 end
 
 function createDialTab(tabControl)
-	DialTab = tabControl:newTab("Dial")
+	DialTab = tabControl:addTab("Dial")
 
 	-- Fast Dial Checkbox
 	DialTab:addLabel({
@@ -81,12 +91,13 @@ function createDialTab(tabControl)
 		text = "Fast Dial:",
 		foreground = colors.orange,
 	})
-	fastDialCheckbox = DialTab:addCheckBox({
+	fastDialCheckbox = DialTab:addCheckbox({
 		x = 13,
 		y = 2,
 		text = "[ ]",
 		checkedText = "[X]",
 		foreground = colors.yellow,
+		checked = true
 	})
 
 	DialTab:addButton({
@@ -105,28 +116,14 @@ function createDialTab(tabControl)
 	refreshDialTab()
 end
 
-function listenBasaltAddressUpdate()
-	while true do
-		local event, data = os.pullEvent("basalt_address_update")
-
-		if DialTab == nil then
-			return
-		end
-
-		AddressTab:clear()
-
-		refreshDialTab()
-	end
-end
-
 function refreshDialTab()
 	local addressBook = AddressBook.getAddressBook()
 
-	if AddressTab ~= nil then
-		AddressTab:destroy()
+	if MonitorUI.AddressFrame ~= nil then
+		MonitorUI.AddressFrame:destroy()
 	end
 
-	AddressTab = DialTab:addTabControl({
+	MonitorUI.AddressFrame = DialTab:addTabControl({
 		x = 2,
 		y = 4,
 		width = 34,
@@ -136,9 +133,9 @@ function refreshDialTab()
 		activeTabBackground = colors.lightBlue
 	})
 
-	local localList = AddressTab:newTab("7-Chevron")
-	local galacticList = AddressTab:newTab("8-Chevron")
-	local directList = AddressTab:newTab("9-Chevron")
+	local localList = MonitorUI.AddressFrame:addTab("7-Chevron")
+	local galacticList = MonitorUI.AddressFrame:addTab("8-Chevron")
+	local directList = MonitorUI.AddressFrame:addTab("9-Chevron")
 
 	local localPos = { x = 2, y = 2 }
 	local galacticPos = { x = 2, y = 2 }
@@ -231,7 +228,7 @@ function refreshDialTab()
 end
 
 function createDebugTab(tabControl)
-	local debugTab = tabControl:newTab("Debug")
+	local debugTab = tabControl:addTab("Debug")
 
 	debugTab:addLabel({
 		x = 2,
@@ -286,7 +283,8 @@ function createDebugTab(tabControl)
 	chevronTable = debugTab
 		:addTable({
 			x = 2,
-			y = 14,
+			y = 18,
+			height=11,
 			background = colors.black,
 			foreground = colors.yellow,
 		})
@@ -350,7 +348,7 @@ function updateGateData() -- "data_update"
 
 		if data.advanced.available then
 			localAddressLabel:setText(data.advanced.localAddress)
-			networkLabel:setText("Networks: [" .. table.concat(data.advanced.network, ", ").. "]")
+			networkLabel:setText("Networks: [" .. table.concat(data.advanced.network, ", ") .. "]")
 		else
 			localAddressLabel:setText("Unavailable")
 			networkLabel:setText("Network: Unavailable")
@@ -367,7 +365,8 @@ function createInterface(basalt)
 
 	local x, y = Monitor.getSize()
 
-	local main = basalt.createFrame():setTerm(Monitor)
+	local main = basalt.createFrame(Monitor)
+	local xml = basalt.use("xml")
 
 	local tabControl = main:addTabControl({
 		x = 1,
@@ -379,9 +378,9 @@ function createInterface(basalt)
 		activeTabBackground = colors.lightBlue
 	})
 
-	createInfoTab(tabControl)
-	createDialTab(tabControl)
-	createDebugTab(tabControl)
+	createInfoTab(tabControl, xml)
+	createDialTab(tabControl, xml)
+	createDebugTab(tabControl, xml)
 end
 
 return {

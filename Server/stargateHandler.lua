@@ -205,8 +205,12 @@ function listenDialStargate()
 
 		activeAddress = AddressBook.getAddressFromIDOrAddress(address)
 
-		CreateDisplayLink.UpdateDisplay({content = "Dialing", xPos = 13}, {content = address, xPos = 7 })
-		dialStargate(AddressBook.stringToTable(address), isFast)
+		if activeAddress.security.restricted == true then
+			Helpers.log("Address restricted. Aborting dial sequence")
+		else
+			CreateDisplayLink.UpdateDisplay({content = "Dialing", xPos = 13}, {content = address, xPos = 7 })
+			dialStargate(AddressBook.stringToTable(address), isFast)
+		end
 	end
 end
 
@@ -450,7 +454,7 @@ end
 
 -- returns the status of the Iris
 function irisStatus()
-	if stargate.getIris ~= nil then
+	if stargate.getIris() ~= nil then
 		local progress = stargate.getIrisProgressPercentage()
 
 		if progress == 0 then

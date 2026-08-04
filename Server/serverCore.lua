@@ -77,6 +77,8 @@ local commands = {
 				else
 					Helpers.log("No address found for " .. cmdTable[3])
 				end
+			elseif cmdTable[2] == "del"  and cmdTable[3] ~= nil then
+				AddressBook.removeAddress(cmdTable[3])
 			end
 		end)
 	}
