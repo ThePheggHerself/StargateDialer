@@ -195,7 +195,7 @@ end
 function listenTransmissionRecieved()
 	while true do
 		local name, periphName, freq, code, validOverride = os.pullEvent("transceiver_transmission_received")
-		StargateTransceiver.ListenTransmissionRecieved(name, periphName, freq, code, validOverride)
+		StargateTransceiver.ListenTransmissionRecieved(name, periphName, freq, code, validOverride, stargate)
 	end
 end
 
@@ -463,6 +463,9 @@ function irisStatus()
 	else
 		return "No Iris Installed"
 	end
+end
+
+function handleGDO()
 end
 
 function toggleIris(state)

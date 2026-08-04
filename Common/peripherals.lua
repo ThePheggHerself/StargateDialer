@@ -23,7 +23,7 @@ CreateDisplayLink = {
 
 StargateTransceiver = {
     Transceiver = peripheral.find("transceiver"),
-    ListenTransmissionRecieved = function (name, periphName, freq, code, matchingIDC)
+    ListenTransmissionRecieved = function (name, periphName, freq, code, matchingIDC, stargate)
         Helpers.log(string.format("[GDO] IDC %s recieved on frequency %s", code, freq))
 
 		if not stargate.isWormholeOpen() then
