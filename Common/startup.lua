@@ -45,6 +45,17 @@ function UpdateAddresses()
     end
 end
 
+function LoadBasalt()
+    if not fs.exists("basalt.lua") then
+        Helpers.log("Basalt not found. Installing...")
+        shell.run("wget run https://basalt.madefor.cc/2.5/install.lua minified")
+
+        sleep(1)
+    end
+
+    Basalt = require("basalt")
+end
+
 sleep(0.5)
 
 print("Welcome to the basalt dialer")
@@ -75,7 +86,7 @@ end
 local instanceStart = {
     pocket = (function(...)
         PocketInterface = require("pocketInterface")
-        Basalt = require("basalt")
+        LoadBasalt()
 
         print("Waiting 3 seconds to sync")
 
@@ -97,7 +108,7 @@ local instanceStart = {
         Monitor = peripheral.find("monitor")
         MonitorInterface = require("clientMonitorInterface") -- Handles the UI on the monitor
         TerminalInterface = require("clientTerminalInterface") -- Handles the UI on the terminal
-        Basalt = require("basalt")
+        LoadBasalt()
 
         print("Waiting 3 seconds to sync")
 
