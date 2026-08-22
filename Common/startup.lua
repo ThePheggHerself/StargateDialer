@@ -30,7 +30,7 @@ function LoadSettings()
 end
 
 function UpdateAddresses()
-    if Settings.AutoUpdateAddresses then
+    if not fs.exists(AddressFile) then
         print("Updating addresses")
 
         if fs.exists(AddressFile) then
