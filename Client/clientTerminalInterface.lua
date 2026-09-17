@@ -37,22 +37,25 @@ AddressEditor = {
 			AddressEditor.EditorFrame:focus()
 		end
 	end),
-	openEditorWithData = (function(address)
-		if AddressEditor.EditorFrame.disabled and address ~= nil then
-			AddressEditor.Address.text = address.address
-			AddressEditor.Id.text = address.id
-			AddressEditor.Id.disabled = true
-			AddressEditor.Display.text = address.display
-			AddressEditor.Hidden.checked = address.hidden
-			AddressEditor.Security.irisAutoOpen.checked = address.security.irisAutoOpen
-			AddressEditor.Security.sirens.checked = address.security.sirens
-			AddressEditor.Security.restricted.checked = address.security.restricted
-			AddressEditor.Security.idc.text = address.security.IDC or ""
+	openEditorWithData = (function(selectedRow)
+		if selectedRow ~= nil then
+			address = AddressBook.getAddressFromIDOrAddress(selectedRow[1])
+		 	if AddressEditor.EditorFrame.disabled and address ~= nil then
+				AddressEditor.Address.text = address.address
+				AddressEditor.Id.text = address.id
+				AddressEditor.Id.disabled = true
+				AddressEditor.Display.text = address.display
+				AddressEditor.Hidden.checked = address.hidden
+				AddressEditor.Security.irisAutoOpen.checked = address.security.irisAutoOpen
+				AddressEditor.Security.sirens.checked = address.security.sirens
+				AddressEditor.Security.restricted.checked = address.security.restricted
+				AddressEditor.Security.idc.text = address.security.IDC or ""
 
-			AddressEditor.EditorFrame.disabled = false
-			AddressEditor.EditorFrame.visible = true
-			TerminalUI.TabControl.disabled = false
-			AddressEditor.EditorFrame:focus()
+				AddressEditor.EditorFrame.disabled = false
+				AddressEditor.EditorFrame.visible = true
+				TerminalUI.TabControl.disabled = false
+				AddressEditor.EditorFrame:focus()
+			end
 		end
 	end),
 	saveAddress = (function()
@@ -80,8 +83,13 @@ AddressEditor = {
 		end)
 		AddressEditor.closeEditor()
 	end),
-	shareAddress = (function() 
-		os.queueEvent("basalt_command", "share " .. AddressEditor.Address:getText())
+	shareAddress = (function(selectedRow) 	
+		if selectedRow ~= nil then
+			address = AddressBook.getAddressFromIDOrAddress(selectedRow[1])
+			if address ~= nil then				
+				os.queueEvent("basalt_command", "share " .. address.address)
+			end
+		end
 	end),
 	closeEditor = function()
 		TerminalUI.ConsoleFrame:focus()
@@ -113,9 +121,6 @@ AddressEditor = {
 
 		AddressEditor.EditorFrame:addButton({ x = 2, y = 12, text = "Save", height = 1, background = colors.green })
 			:onClick(function(self, checked) AddressEditor.saveAddress() end)
-
-			AddressEditor.EditorFrame:addButton({ x = 15, y = 12, text = "Share", height = 1, background = colors.blue })
-			:onClick(function(self, checked) AddressEditor.shareAddress() end)
 
 		AddressEditor.EditorFrame:addButton({ x = 37, y = 12, text = "Cancel", height = 1, background = colors.red })
 			:onClick(function(self, checked) AddressEditor.closeEditor() end)
@@ -251,18 +256,22 @@ function createAddressesTab(tabControl, xml)
 		boxForeground = colors.black,
 	})
 
-	TerminalUI.AddressFrame:addButton({ x = 2, y = 17, width = 10, text = "Add", height = 1, background = colors.green })
+	TerminalUI.AddressFrame:addButton({ x = 2, y = 17, width = 8, text = "Add", height = 1, background = colors.green })
 		:onClick(function(self, checked) AddressEditor.openEmptyEditor() end)
 
-	TerminalUI.AddressFrame:addButton({ x = 14, y = 17, width = 10, text = "Edit", height = 1, background = colors
+	TerminalUI.AddressFrame:addButton({ x = 11, y = 17, width = 8, text = "Edit", height = 1, background = colors
 	.orange })
-		:onClick(function(self, checked) AddressEditor.openEditorWithData(AddressBook.getAddressFromIDOrAddress(
-			TerminalUI.AddressTable:getSelectedRow()[1])) end)
+		:onClick(function(self, checked) AddressEditor.openEditorWithData(TerminalUI.AddressTable:getSelectedRow()) end)
 
-	TerminalUI.AddressFrame:addButton({ x = 26, y = 17, width = 10, text = "Delete", height = 1, background = colors.red })
+	TerminalUI.AddressFrame:addButton({ x = 20, y = 17, width = 8, text = "Share", height = 1, background = colors.cyan })
+		:onClick(function(self, checked) AddressEditor.shareAddress(TerminalUI.AddressTable:getSelectedRow()) end)
+
+	TerminalUI.AddressFrame:addButton({ x = 29, y = 17, width = 8, text = "Delete", height = 1, background = colors.red })
 		:onClick(function(self, checked) confirmDelete(TerminalUI.AddressTable:getSelectedRow()) end)
 
-	TerminalUI.AddressFrame:addButton({ x = 41, y = 17, text = "Resync", height = 1, background = colors.cyan })
+
+
+	TerminalUI.AddressFrame:addButton({ x = 41, y = 17, text = "Resync", height = 1, background = colors.purple })
 		:onClick(function(self, checked) resyncAddresses() end)
 
 	AddressEditor.createEditor()
