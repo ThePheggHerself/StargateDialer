@@ -77,6 +77,10 @@ function roundDecimal(number, decimals)
 end
 
 function ticksToMinutesSeconds(ticks)
+	if ticks == nil then
+		return nil
+	end
+
 	seconds = math.floor(ticks / 20)
 
 	local minutes = 0
@@ -92,6 +96,10 @@ end
 -- Converts power to easily readable units (1000FE -> 1kFE)
 Energy_suffixes = { "", "k", "M", "G", "T", "P" }
 function convertToPowerUnits(powerAmount)
+	if powerAmount == nil then
+		return nil
+	end
+
 	local timesConverted = 1
 	while powerAmount > 1000 do
 		timesConverted = timesConverted + 1

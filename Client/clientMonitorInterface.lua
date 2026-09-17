@@ -284,7 +284,7 @@ function createDebugTab(tabControl)
 		:addTable({
 			x = 2,
 			y = 18,
-			height=11,
+			height = 11,
 			background = colors.black,
 			foreground = colors.yellow,
 		})
@@ -307,55 +307,60 @@ function updateGateData() -- "data_update"
 	while true do
 		local event, data = os.pullEvent("data_update")
 
-		--Info Tab
 		warningLabel:setText(data.warning)
 		statusLabel:setText(data.status)
-		chevronsLabel:setText("Chevrons Engaged: " .. data.basic.chevronsEngaged)
-		displayLabel:setText(data.activeAddress.display)
-		addressLabel:setText(data.activeAddress.address:sub(2, -2))
-		openTimeLabel:setText("Open Time: " .. Helpers.ticksToMinutesSeconds(data.basic.openTime))
-		irisLabel:setText(data.iris.status)
 
-		if data.iris.maxDurability ~= nil and data.iris.maxDurability > 0 then
-			irisDuraLabel:setText(
+		if data.status ~= "Missing" then
+			--Info Tab
+			warningLabel:setText(data.warning)
+			statusLabel:setText(data.status)
+			chevronsLabel:setText("Chevrons Engaged: " .. (data.basic.chevronsEngaged or "N/A"))
+			displayLabel:setText(data.activeAddress.display)
+			addressLabel:setText(data.activeAddress.address:sub(2, -2))
+			openTimeLabel:setText("Open Time: " .. (Helpers.ticksToMinutesSeconds(data.basic.openTime) or "N/A"))
+			irisLabel:setText(data.iris.status)
+
+			if data.iris.maxDurability ~= nil and data.iris.maxDurability > 0 then
+				irisDuraLabel:setText(
+					string.format(
+						"Durability: %d%%",
+						math.floor(data.iris.durability / data.iris.maxDurability * 100)
+					)
+				)
+			end
+
+
+			energyLabel:setText(
 				string.format(
-					"Durability: %d%%",
-					math.floor(data.iris.durability / data.iris.maxDurability * 100)
+					"Gate Energy: %s/%s",
+					Helpers.convertToPowerUnits(data.basic.gateEnergy) or "N/A",
+					Helpers.convertToPowerUnits(data.basic.gateEnergyTarget) or "N/A"
 				)
 			)
-		end
-
-
-		energyLabel:setText(
-			string.format(
-				"Gate Energy: %s/%s",
-				Helpers.convertToPowerUnits(data.basic.gateEnergy),
-				Helpers.convertToPowerUnits(data.basic.gateEnergyTarget)
+			interfaceEnergyLabel:setText(
+				string.format(
+					"Interface Energy: %s/%s",
+					Helpers.convertToPowerUnits(data.basic.interfaceEnergy) or "N/A",
+					Helpers.convertToPowerUnits(data.basic.interfaceEnergyCapacity) or "N/A"
+				)
 			)
-		)
-		interfaceEnergyLabel:setText(
-			string.format(
-				"Interface Energy: %s/%s",
-				Helpers.convertToPowerUnits(data.basic.interfaceEnergy),
-				Helpers.convertToPowerUnits(data.basic.interfaceEnergyCapacity)
-			)
-		)
-		feedbackLabel:setText(data.basic.feedbackCode)
+			feedbackLabel:setText(data.basic.feedbackCode or "N/A")
 
-		--Debug Tab
-		gateGenLabel:setText("Generation: " .. GateGeneration[data.basic.generation])
-		interfaceLabel:setText(data.basic.interface)
+			--Debug Tab
+			gateGenLabel:setText("Generation: " .. GateGeneration[data.basic.generation or -1])
+			interfaceLabel:setText(data.basic.interface or "N/A")
 
-		if data.advanced.available then
-			localAddressLabel:setText(data.advanced.localAddress)
-			networkLabel:setText("Networks: [" .. table.concat(data.advanced.network, ", ") .. "]")
-		else
-			localAddressLabel:setText("Unavailable")
-			networkLabel:setText("Network: Unavailable")
-		end
+			if data.advanced.available then
+				localAddressLabel:setText(data.advanced.localAddress or "N/A")
+				networkLabel:setText("Networks: [" .. table.concat(data.advanced.network, ", ") or "N/A" .. "]")
+			else
+				localAddressLabel:setText("Unavailable")
+				networkLabel:setText("Network: Unavailable")
+			end
 
-		for i, state in pairs(data.chevrons) do
-			chevronTable:updateCell(i, 2, state)
+			for i, state in pairs(data.chevrons) do
+				chevronTable:updateCell(i, 2, state)
+			end
 		end
 	end
 end
