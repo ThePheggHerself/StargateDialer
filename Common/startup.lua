@@ -99,8 +99,8 @@ local instanceStart = {
         end),
     client = (function (...)
         Monitor = peripheral.find("monitor")
-        MonitorInterface = require("displays/MonitorInterface") -- Handles the UI on the monitor
-        TerminalInterface = require("displays/TerminalInterface") -- Handles the UI on the terminal
+        MonitorInterface = require("clientMonitorInterface") -- Handles the UI on the monitor
+        TerminalInterface = require("clientTerminalInterface") -- Handles the UI on the terminal
         LoadBasalt()
 
         print("Waiting 3 seconds to sync")
