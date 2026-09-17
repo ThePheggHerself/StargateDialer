@@ -67,7 +67,36 @@ ChatBox = {
     Chatbox = peripheral.find("chat_box"),
     SendToast = function (message)
         if ChatBox.Chatbox then
-            ChatBox.Chatbox.sendToastToPlayer(message, "Stargate Dialer", "PheWitch", "&4&lWarning", "()", "&c&l")
+            ChatBox.Chatbox.sendToast({
+                message = message,
+                title = "Stargate Dialer",
+                player = "PheWitch",
+                prefix = "&4&lWarning",
+                brackets = "()",
+                bracketsColor = "&c&l",
+            })
         end
+    end,
+    ShareAddress = function (name, address)
+        local message = {
+            {text = "PheWitch shared a Stargate Address: ", color = "white"},
+            {
+                text = name .. " [" .. address .. "]", 
+                color = "yellow", 
+                clickEvent = {
+                    action = "copy_to_clipboard",
+                    value = address .. ""
+                }
+            }
+        }
+
+        local options = {
+            prefix = "&aDialer",
+            brackets = "[]",
+            bracketsColor = "&a"
+        }
+
+        local json = textutils.serialiseJSON(message)
+        ChatBox.Chatbox.sendFormattedMessage(json, options)
     end
 }

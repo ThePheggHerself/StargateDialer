@@ -21,6 +21,7 @@ ModemMessages = {
 		Instance = "server",
 		func = (function(...)
 			local msgTable = ...
+			print(msgTable.content)
 			os.queueEvent("request_command", msgTable.content)
 		end)
 	},
@@ -66,8 +67,6 @@ ModemMessages = {
 		Instance = "server",
 		func = (function (...)
 			local addressTbl = ...
-
-			print(textutils.serialise(addressTbl.content))
 			AddressBook.addAddress(addressTbl.content.id, addressTbl.content)
 		end)
 	}

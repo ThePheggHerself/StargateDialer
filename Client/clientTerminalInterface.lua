@@ -57,11 +57,6 @@ AddressEditor = {
 	end),
 	saveAddress = (function()
 		if AddressEditor.Address ~= nil then
-
-			for k, v in pairs(AddressEditor.Security) do
-				Helpers.log(k, v)
-			end
-
 			Wireless.transmitMessage({
 				type = "address_creation",
 				content =
@@ -84,6 +79,9 @@ AddressEditor = {
 			resyncAddresses()
 		end)
 		AddressEditor.closeEditor()
+	end),
+	shareAddress = (function() 
+		os.queueEvent("basalt_command", "share " .. AddressEditor.Address:getText())
 	end),
 	closeEditor = function()
 		TerminalUI.ConsoleFrame:focus()
@@ -115,6 +113,9 @@ AddressEditor = {
 
 		AddressEditor.EditorFrame:addButton({ x = 2, y = 12, text = "Save", height = 1, background = colors.green })
 			:onClick(function(self, checked) AddressEditor.saveAddress() end)
+
+			AddressEditor.EditorFrame:addButton({ x = 15, y = 12, text = "Share", height = 1, background = colors.blue })
+			:onClick(function(self, checked) AddressEditor.shareAddress() end)
 
 		AddressEditor.EditorFrame:addButton({ x = 37, y = 12, text = "Cancel", height = 1, background = colors.red })
 			:onClick(function(self, checked) AddressEditor.closeEditor() end)
@@ -173,7 +174,7 @@ AddressEditor = {
 
 		AddressEditor.EditorFrame.disabled = true
 		AddressEditor.EditorFrame.visible = false
-	end
+	end	
 }
 
 local deleteDialog = nil

@@ -76,12 +76,6 @@ AddressBook = require("addressBook")
 Wireless = require("wirelessHandler")
 Helpers = require("helpers")
 Strings = require "cc.strings"
-require("peripherals")
-
-
-local function Startup()
-    
-end
 
 local instanceStart = {
     pocket = (function(...)
@@ -94,20 +88,19 @@ local instanceStart = {
 
         print("Syncing data with server")
         local synced = Wireless.clientSyncDataFromServer("addresses")
-
         if synced then
-            print("Successfully synced addresses with server")
+        print("Successfully synced addresses with server")
 
             PocketCore = require("pocketCore")
             PocketCore.run()
-            else
-                print("Unable to sync with server. Startup aborted")
-            end
+        else
+            print("Unable to sync with server. Startup aborted")
+        end
         end),
     client = (function (...)
         Monitor = peripheral.find("monitor")
-        MonitorInterface = require("clientMonitorInterface") -- Handles the UI on the monitor
-        TerminalInterface = require("clientTerminalInterface") -- Handles the UI on the terminal
+        MonitorInterface = require("displays/MonitorInterface") -- Handles the UI on the monitor
+        TerminalInterface = require("displays/TerminalInterface") -- Handles the UI on the terminal
         LoadBasalt()
 
         print("Waiting 3 seconds to sync")
@@ -130,7 +123,7 @@ local instanceStart = {
         AddressBook.serverReadTableFromFile(AddressFile)
 
         SGHandler = require("stargateHandler") -- Handles everything Stargate related
-
+        require("peripherals") -- Handles peripherals such as the ChatBox, Create's DisplayLink and the SGJ Treansciever
         ServerCore = require("serverCore")
         ServerCore.run()
     end)

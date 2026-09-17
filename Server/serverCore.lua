@@ -81,6 +81,18 @@ local commands = {
 				AddressBook.removeAddress(cmdTable[3])
 			end
 		end)
+	},
+	{
+		name = "share",
+		description = "Share an address in chat",
+		func = (function (cmdTable)
+			if cmdTable[2] ~= nil then
+				local shareAddress = AddressBook.getAddressFromIDOrAddress(cmdTable[2])
+				if shareAddress.display ~= nil then
+					ChatBox.ShareAddress(shareAddress.display, shareAddress.address)
+				end
+			end
+		end)
 	}
 }
 

@@ -48,7 +48,7 @@ function listenStargateIncomingConnection() -- "stargate_incoming_connection"
 		local name, peripheralName = os.pullEvent("stargate_incoming_connection")
 
 		CreateDisplayLink.UpdateDisplay({content = "WARNING", xPos = 13 }, {content = "Incoming Connection", xPos = 7})
-		ChatBox.SendToast("Incoming Connection")
+		ChatBox.SendToast("Offworld Activation")
 	end
 end
 
@@ -64,7 +64,7 @@ function listenStargateIncomingWormhole() -- "stargate_incoming_wormhole"
 			activeAddress = { id = "unknown", display = "Unknown", address = addrStr }
 
 			CreateDisplayLink.UpdateDisplay({content = "Incoming Wormhole", xPos = 7}, {content = "Origin Unavailable", xPos = 7 })
-			ChatBox.SendToast("Incoming Wormhole! Origin: Unavailable")
+			ChatBox.SendToast("Origin: Unavailable")
 		else
 
 		
@@ -75,13 +75,13 @@ function listenStargateIncomingWormhole() -- "stargate_incoming_wormhole"
 				activeAddress = address
 
 				CreateDisplayLink.UpdateDisplay({content = "Incoming Wormhole", xPos = 7}, {content = address.display, xPos = 7 })
-				ChatBox.SendToast("Incoming Wormhole! Origin: " .. address.id)
+				ChatBox.SendToast("Origin: " .. address.display)
 			else
 				Helpers.log(string.format("Origin: %s (%s)", address.address, address.display))
 				activeAddress = address
 
 				CreateDisplayLink.UpdateDisplay({content = "Incoming Wormhole", xPos = 7}, {content = address.address, xPos = 7 })
-				ChatBox.SendToast("Incoming Wormhole! Origin: " .. address.address)
+				ChatBox.SendToast("Origin: " .. address.address)
 			end
 		end
 
@@ -124,6 +124,8 @@ function listenStargateDisconnected() -- "stargate_disconnected"
 	while true do
 		local name, periphName, feedback, feedbackDescription = os.pullEvent("stargate_disconnected")
 		Helpers.log(string.format("Disconnected: %s", Helpers.GateFeedbackCodes[feedback]))
+
+		stargate.openIris()
 	end
 end
 
@@ -390,9 +392,16 @@ function dialStargate(addArr, isFast)
 				end
 
 				if stargate.openChevron ~= nil then
-					stargate.openChevron()
-					sleep(0.2)
-					stargate.closeChevron()
+					if isFast then
+						stargate.openChevron()
+						stargate.closeChevron()
+					else
+						sleep(0.5)
+						stargate.openChevron()
+						sleep(1)
+						stargate.closeChevron()
+						sleep(1)
+					end
 				else
 					stargate.encodeChevron()
 				end
