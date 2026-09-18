@@ -5,13 +5,24 @@ LastHeartbeat = os.time("utc")
 SyncableData = {
 	addresses = {
 		serverFunc = (function(...)
-			return AddressBook.getAddressBook()
+			local addrs = AddressBook.getAddressBook()
+			local count = 0
+
+			for _, addr in pairs(addrs) do
+				count = count + 1
+			end
+
+			print(count)
+
+			return { AddressBook.getAddressBook(), count }
 		end),
 		clientFunc = (function(...)
-			local addresses = ...
-			
-			AddressBook.clientSetAddressBook(addresses)
-			os.queueEvent("basalt_address_update")
+			local response = ...
+
+			if response[2] > 0 then
+				AddressBook.clientSetAddressBook(response[1])
+				os.queueEvent("basalt_address_update")
+			end
 		end)
 	}
 }
@@ -40,7 +51,6 @@ ModemMessages = {
 			end
 		end)
 	},
-
 	sync_response_from_server = {
 		NotInstance = "server",
 		func = (function(...)

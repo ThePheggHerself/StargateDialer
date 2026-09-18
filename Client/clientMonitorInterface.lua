@@ -141,7 +141,22 @@ function refreshDialTab()
 	local galacticPos = { x = 2, y = 2 }
 	local directPos = { x = 2, y = 2 }
 
-	for i, addr in pairs(addressBook) do
+
+	local addressBook = AddressBook.getAddressBook()
+	local tempAddrTable = {}
+
+	for _, address in pairs(addressBook) do
+		table.insert(tempAddrTable, { address.id, address.display })
+	end
+
+	local function sortingFunction(tAddr1, tAddr2)
+		return tAddr1[2] < tAddr2[2]
+	end
+
+	table.sort(tempAddrTable, sortingFunction)
+
+	for i, tempAddr in pairs(tempAddrTable) do
+		local addr = addressBook[tempAddr[1]]
 		local addressTable = AddressBook.stringToTable(addr.address)
 
 		if not addr.hidden then
