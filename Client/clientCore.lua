@@ -62,14 +62,14 @@ function startInterfaces()
 end
 
 function run()
-	TerminalInterface.createInterface(Basalt)
-	MonitorInterface.createInterface(Basalt)
+	TerminalInterface.createInterface()
+	MonitorInterface.createInterface()
 	
 	
 	Helpers.log("Welcome to the BasaltDialer Terminal")
 
 	parallel.waitForAny(
-		MonitorInterface.updateGateData,
+		MonitorInterface.refreshGateData,
 		listenBasaltAddressUpdate,
 		listenConsoleLogRequest,
 		listenInput,

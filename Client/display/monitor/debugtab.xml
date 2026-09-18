@@ -1,0 +1,12 @@
+<frame name="debug_tab_frame" x="1" y="1" width="36" height="37" background="#111111" scrollable="true" scrollbar="auto">
+
+	<label name="gate_info_title" x="2" y="2" text="Gate Info" foreground="#F2B233"/>
+    <label name="gate_generation_label" x="2" y="3" text="Generation:" foreground="#DEDE6C"/>
+    <label name="gate_networks_label" x="2" y="4" text="Networks:" foreground="#DEDE6C"/>
+
+    <label name="gate_address_title" x="2" y="6" text="Gate Address:" foreground="#F2B233"/>
+    <label name="gate_address_label" x="2" y="7" text="" foreground="#DEDE6C"/>
+
+    <label name="interface_title" x="2" y="10" text="Interface:" foreground="#F2B233"/>
+    <label name="interface_label" x="2" y="11" text="" foreground="#DEDE6C"/>
+</frame>

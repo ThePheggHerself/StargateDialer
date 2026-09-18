@@ -1,0 +1,32 @@
+<frame name="info_tab_frame" x="1" y="1" width="36" height="37" background="#111111" scrollable="true" scrollbar="auto">
+
+	<label name="warning_label" x="2" y="2" text="" foreground="#CC4C4C"  />
+
+	<label name="status_title" x="2" y="4" text="Stargate Status:" foreground="#F2B233"/>
+	<label name="chevrons_label" x="2" y="5" text="Chevrons:" foreground="#DEDE6C"/>
+	<label name="open_time_label" x="2" y="6" text="Open time:" foreground="#DEDE6C"/>
+
+	<label name="status_label" x="2" y="8" text="Idle" foreground="#DEDE6C"/>
+	<label name="display_label" x="2" y="9" text="Origin:" foreground="#DEDE6C"/>
+	<label name="address_label" x="2" y="10" text="Address: N/A" foreground="#DEDE6C"/>
+
+	<label name="iris_title" x="2" y="12" text="Iris Status:" foreground="#F2B233"/>
+	<label name="iris_label" x="2" y="13" text="N/A" foreground="#DEDE6C"/>
+	<label name="iris_durability_label" x="2" y="14" text="" foreground="#DEDE6C"/>
+
+	<label name="iris_control_title" x="2" y="16" text="Iris Controls & Security:" foreground="#F2B233"/>
+
+	<button name="iris_open_button" x="2" y="18" width="10" height="1" text="Close" background="#CC4C4C" foreground="#F0F0F0" onClick="closeIris"/>
+	<button name="iris_close_button" x="14" y="18" width="10" height="1" text="Open" background="#57A64E" foreground="#F0F0F0" onClick="openIris"/>
+
+	<button name="disconnect_button" x="2" y="20" width="13" height="1" text="Disconnect" background="#CC4C4C" foreground="#F0F0F0" onClick="disconnect"/>
+	<button name="siren_button" x="16" y="20" width="10" height="1" text="Sirens" background="#CC4C4C" foreground="#F0F0F0" onClick="toggleSirens"/>
+
+	<label name="energy_title" x="2" y="22" text="Energy Info" foreground="#F2B233"/>
+	<label name="gate_energy_label" x="2" y="23" text="Gate Energy:" foreground="#DEDE6C"/>
+	<label name="interface_energy_label" x="2" y="24" text="Interface Energy:" foreground="#DEDE6C"/>
+
+	<label name="feedback_title" x="2" y="26" text="Feedback Status:" foreground="#F2B233"/>>
+	<label name="feedback_label" x="2" y="27" text="" foreground="#DEDE6C"/>
+
+</frame>

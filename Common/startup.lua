@@ -54,6 +54,7 @@ function LoadBasalt()
     end
 
     Basalt = require("basalt")
+    BasaltXml = Basalt.use("xml")
 end
 
 sleep(0.5)

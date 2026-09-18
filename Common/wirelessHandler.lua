@@ -1,4 +1,4 @@
-local modem = peripheral.find("modem")
+local modem = peripheral.find("modem", function(name, object) return object.isWireless() end)
 
 LastHeartbeat = os.time("utc")
 
@@ -11,8 +11,6 @@ SyncableData = {
 			for _, addr in pairs(addrs) do
 				count = count + 1
 			end
-
-			print(count)
 
 			return { AddressBook.getAddressBook(), count }
 		end),
@@ -32,7 +30,6 @@ ModemMessages = {
 		Instance = "server",
 		func = (function(...)
 			local msgTable = ...
-			print(msgTable.content)
 			os.queueEvent("request_command", msgTable.content)
 		end)
 	},
@@ -40,7 +37,7 @@ ModemMessages = {
 		Instance = "server",
 		func = (function(...)
 			local msgTable = ...
-			print("Sync request: ", msgTable.content, SyncableData[msgTable.content] == nil)
+			print("Sync request:", msgTable.content)
 
 			if SyncableData[msgTable.content] then
 				SyncableData[msgTable.content].serverFunc()

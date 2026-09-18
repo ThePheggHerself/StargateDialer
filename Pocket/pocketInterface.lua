@@ -215,9 +215,9 @@ function createDebugTab(tabControl)
 	})
 end
 
-function createInterface(basalt)
+function createInterface()
 
-    local main = basalt.createFrame()
+    local main = Basalt.createFrame()
 	main:setBackground(colors.gray)
 
 	createDialTab(main, AddressBook.getAddressBook())

@@ -1,31 +1,14 @@
 MonitorUI = {
-	AddressFrame = nil
+	InfoFrame = nil,
+	AddressFrame = nil,
+	DebugFrame = nil
 }
 
-local basaltInit = false
---Info Tab
-local warningLabel = nil
-local statusLabel = nil
-local chevronsLabel = nil
-local displayLabel = nil
-local addressLabel = nil
-local openTimeLabel = nil
-local irisLabel = nil
-local irisDuraLabel = nil
-local energyLabel = nil
-local interfaceEnergyLabel = nil
-local feedbackLabel = nil
-
+local fastDialCheckbox = nil
 local chevronTable = nil
 
---Debug Tab
-local gateGenLabel = nil
-local interfaceLabel = nil
-local localAddressLabel = nil
-local networkLabel = nil
-local fastDialCheckbox = nil
 
-function createInfoTab(tabControl, xml)
+function createInfoTab(tabControl)
 	local scope = {
 		closeIris = function(self)
 			os.queueEvent("basalt_command", "iris close")
@@ -40,45 +23,8 @@ function createInfoTab(tabControl, xml)
 			os.queueEvent("basalt_command", "togglealarms false")
 		end
 	}
-	local infoTab = tabControl:addTab("Info")
-		:addFrame({
-			x = 1,
-			y = 1,
-			width = 29,
-			height = 50,
-			background = colors.black,
-			scrollable = true,
-			scrollbar = "auto"
-		})
-
-	xml.load(infoTab, [[
-		<label x="2" y="4" text="Stargate Status:" foreground="#F2B233"/>
-		<label x="2" y="12" text="Iris Status:" foreground="#F2B233"/>
-		<button x="2" y="16" width="10" height="1" text="Close" background="#CC4C4C" foreground="#F0F0F0" onClick="closeIris"/>
-		<button x="14" y="16" width="10" height="1" text="Open" background="#57A64E" foreground="#F0F0F0" onClick="openIris"/>
-
-		<label x="2" y="18" text="Iris Controls:" foreground="#F2B233"/>
-		<button x="2" y="20" width="13" height="1" text="Disconnect" background="#CC4C4C" foreground="#F0F0F0" onClick="disconnect"/>
-		<button x="16" y="20" width="10" height="1" text="Sirens" background="#CC4C4C" foreground="#F0F0F0" onClick="toggleSirens"/>
-
-		<label x="2" y="22" text="Energy Info" foreground="#F2B233"/>
-
-		<label x="2" y="26" text="Feedback Status:" foreground="#F2B233"/>
-	]], scope)
-
-	warningLabel = infoTab:addLabel({ x = 2, y = 2, foreground = colors.red, text = "" })
-	chevronsLabel = infoTab:addLabel({ x = 2, y = 5, text = "Chevrons:", foreground = colors.yellow })
-	openTimeLabel = infoTab:addLabel({ x = 2, y = 6, text = "Open ticks:", foreground = colors.yellow })
-	statusLabel = infoTab:addLabel({ x = 2, y = 8, text = "Idle", foreground = colors.yellow })
-	displayLabel = infoTab:addLabel({ x = 2, y = 9, text = "Origin: ", foreground = colors.yellow })
-	addressLabel = infoTab:addLabel({ x = 2, y = 10, text = "Address: N/A", foreground = colors.yellow })
-	irisLabel = infoTab:addLabel({ x = 2, y = 13, text = "N/A", foreground = colors.yellow, })
-	irisDuraLabel = infoTab:addLabel({ x = 2, y = 14, width = 38, text = "", foreground = colors.yellow, })
-
-	energyLabel = infoTab:addLabel({ x = 2, y = 23, text = "Gate Energy: ", foreground = colors.yellow })
-	interfaceEnergyLabel = infoTab:addLabel({ x = 2, y = 24, text = "Interface Energy: ", foreground = colors.yellow })
-
-	feedbackLabel = infoTab:addLabel({ x = 2, y = 27, text = "", foreground = colors.yellow })
+	MonitorUI.InfoFrame = tabControl:addTab("Info")
+	BasaltXml.loadFile(MonitorUI.InfoFrame, "display/monitor/infotab.xml", scope)
 end
 
 function createDialTab(tabControl)
@@ -115,6 +61,34 @@ function createDialTab(tabControl)
 
 	refreshDialTab()
 end
+
+function createDebugTab(tabControl)
+	MonitorUI.DebugFrame = tabControl:addTab("Debug")
+	BasaltXml.loadFile(MonitorUI.DebugFrame, "display/monitor/debugtab.xml")
+
+	chevronTable = MonitorUI.DebugFrame
+		:addTable({
+			x = 2,
+			y = 18,
+			height = 11,
+			background = colors.black,
+			foreground = colors.yellow,
+		})
+		:setColumns({
+			{ name = "Chevron", width = 12 },
+			{ name = "Status",  width = 8 },
+		})
+		:addRow("Chevron 1", "Idle")
+		:addRow("Chevron 2", "Idle")
+		:addRow("Chevron 3", "Idle")
+		:addRow("Chevron 4", "Idle")
+		:addRow("Chevron 5", "Idle")
+		:addRow("Chevron 6", "Idle")
+		:addRow("Chevron 7", "Idle")
+		:addRow("Chevron 8", "Idle")
+		:addRow("Chevron 9", "Idle")
+end
+
 
 function refreshDialTab()
 	local addressBook = AddressBook.getAddressBook()
@@ -242,101 +216,23 @@ function refreshDialTab()
 	end
 end
 
-function createDebugTab(tabControl)
-	local debugTab = tabControl:addTab("Debug")
-
-	debugTab:addLabel({
-		x = 2,
-		y = 2,
-		text = "Gate Info",
-		foreground = colors.orange,
-	})
-	gateGenLabel = debugTab:addLabel({
-		x = 2,
-		y = 3,
-		text = "Generation:",
-		foreground = colors.yellow,
-	})
-
-	networkLabel = debugTab:addLabel({
-		x = 2,
-		y = 4,
-		text = "Network:",
-		foreground = colors.yellow,
-	})
-
-	debugTab:addLabel({
-		x = 2,
-		y = 6,
-		text = "Gate Address:",
-		foreground = colors.orange,
-	})
-
-	localAddressLabel = debugTab:addLabel({
-		x = 2,
-		y = 7,
-		text = "",
-		foreground = colors.yellow,
-	})
-
-	debugTab:addLabel({
-		x = 2,
-		y = 10,
-		text = "Interface:",
-		foreground = colors.orange,
-	})
-	interfaceLabel = debugTab:addLabel({
-		x = 2,
-		y = 11,
-		width = 25,
-		height = 2,
-		text = "",
-		autoSize = false,
-		foreground = colors.yellow,
-	})
-
-	chevronTable = debugTab
-		:addTable({
-			x = 2,
-			y = 18,
-			height = 11,
-			background = colors.black,
-			foreground = colors.yellow,
-		})
-		:setColumns({
-			{ name = "Chevron", width = 12 },
-			{ name = "Status",  width = 8 },
-		})
-		:addRow("Chevron 1", "Idle")
-		:addRow("Chevron 2", "Idle")
-		:addRow("Chevron 3", "Idle")
-		:addRow("Chevron 4", "Idle")
-		:addRow("Chevron 5", "Idle")
-		:addRow("Chevron 6", "Idle")
-		:addRow("Chevron 7", "Idle")
-		:addRow("Chevron 8", "Idle")
-		:addRow("Chevron 9", "Idle")
-end
-
-function updateGateData() -- "data_update"
+function refreshGateData() -- "data_update"
 	while true do
 		local event, data = os.pullEvent("data_update")
 
-		warningLabel:setText(data.warning)
-		statusLabel:setText(data.status)
+		MonitorUI.InfoFrame:find("warning_label"):setText(data.warning)
+		MonitorUI.InfoFrame:find("status_label"):setText(data.status)
 
 		if data.status ~= "Missing" then
 			--Info Tab
-			warningLabel:setText(data.warning)
-			statusLabel:setText(data.status)
-			chevronsLabel:setText("Chevrons Engaged: " .. (data.basic.chevronsEngaged or "N/A"))
-			displayLabel:setText(data.activeAddress.display)
-			addressLabel:setText(data.activeAddress.address:sub(2, -2))
-			openTimeLabel:setText("Open Time: " .. (Helpers.ticksToMinutesSeconds(data.basic.openTime) or "N/A"))
-			irisLabel:setText(data.iris.status)
+			MonitorUI.InfoFrame:find("chevrons_label"):setText("Chevrons Engaged: " .. (data.basic.chevronsEngaged or "N/A"))
+			MonitorUI.InfoFrame:find("display_label"):setText(data.activeAddress.display)
+			MonitorUI.InfoFrame:find("address_label"):setText(data.activeAddress.address:sub(2, -2))
+			MonitorUI.InfoFrame:find("open_time_label"):setText("Open Time: " .. (Helpers.ticksToMinutesSeconds(data.basic.openTime) or "N/A"))
+			MonitorUI.InfoFrame:find("iris_label"):setText(data.iris.status)
 
 			if data.iris.maxDurability ~= nil and data.iris.maxDurability > 0 then
-				irisDuraLabel:setText(
+				MonitorUI.InfoFrame:find("iris_durability_label"):setText(
 					string.format(
 						"Durability: %d%%",
 						math.floor(data.iris.durability / data.iris.maxDurability * 100)
@@ -345,32 +241,32 @@ function updateGateData() -- "data_update"
 			end
 
 
-			energyLabel:setText(
+			MonitorUI.InfoFrame:find("gate_energy_label"):setText(
 				string.format(
 					"Gate Energy: %s/%s",
 					Helpers.convertToPowerUnits(data.basic.gateEnergy) or "N/A",
 					Helpers.convertToPowerUnits(data.basic.gateEnergyTarget) or "N/A"
 				)
 			)
-			interfaceEnergyLabel:setText(
+			MonitorUI.InfoFrame:find("interface_energy_label"):setText(
 				string.format(
 					"Interface Energy: %s/%s",
 					Helpers.convertToPowerUnits(data.basic.interfaceEnergy) or "N/A",
 					Helpers.convertToPowerUnits(data.basic.interfaceEnergyCapacity) or "N/A"
 				)
 			)
-			feedbackLabel:setText(data.basic.feedbackCode or "N/A")
+			MonitorUI.InfoFrame:find("feedback_label"):setText(data.basic.feedbackCode or "N/A")
 
 			--Debug Tab
-			gateGenLabel:setText("Generation: " .. GateGeneration[data.basic.generation or -1])
-			interfaceLabel:setText(data.basic.interface or "N/A")
+			MonitorUI.DebugFrame:find("gate_generation_label"):setText("Generation: " .. GateGeneration[data.basic.generation or -1])
+			MonitorUI.DebugFrame:find("interface_label"):setText(data.basic.interface or "N/A")
 
 			if data.advanced.available then
-				localAddressLabel:setText(data.advanced.localAddress or "N/A")
-				networkLabel:setText("Networks: [" .. table.concat(data.advanced.network, ", ") or "N/A" .. "]")
+				MonitorUI.DebugFrame:find("gate_address_label"):setText(data.advanced.localAddress or "N/A")
+				MonitorUI.DebugFrame:find("gate_networks_label"):setText("Networks: [" .. (table.concat(data.advanced.network, ", ") or "N/A") .. "]")
 			else
-				localAddressLabel:setText("Unavailable")
-				networkLabel:setText("Network: Unavailable")
+				MonitorUI.DebugFrame:find("gate_address_label"):setText("Unavailable")
+				MonitorUI.DebugFrame:find("gate_networks_label"):setText("Network: Unavailable")
 			end
 
 			for i, state in pairs(data.chevrons) do
@@ -380,13 +276,13 @@ function updateGateData() -- "data_update"
 	end
 end
 
-function createInterface(basalt)
+
+function createInterface()
 	Monitor.setTextScale(0.5)
 
 	local x, y = Monitor.getSize()
 
-	local main = basalt.createFrame(Monitor)
-	local xml = basalt.use("xml")
+	local main = Basalt.createFrame(Monitor)
 
 	local tabControl = main:addTabControl({
 		x = 1,
@@ -398,13 +294,13 @@ function createInterface(basalt)
 		activeTabBackground = colors.lightBlue
 	})
 
-	createInfoTab(tabControl, xml)
-	createDialTab(tabControl, xml)
-	createDebugTab(tabControl, xml)
+	createInfoTab(tabControl)
+	createDialTab(tabControl)
+	createDebugTab(tabControl)
 end
 
 return {
 	createInterface = createInterface,
-	updateGateData = updateGateData,
+	refreshGateData = refreshGateData,
 	listenBasaltAddressUpdate = listenBasaltAddressUpdate
 }
