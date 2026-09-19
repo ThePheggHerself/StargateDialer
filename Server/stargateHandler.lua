@@ -86,8 +86,11 @@ function listenStargateIncomingWormhole() -- "stargate_incoming_wormhole"
 		end
 
 		if stargate.getIris ~= nil and stargate.getIrisProgressPercentage() > 99 then
-			stargate.sendStargateMessage(textutils.serialize({ type = "msg", content =
-			"Iris closed! Identification Required" }))                                                             -- Send through the gate to the other side, if possible
+			stargate.sendStargateMessage(textutils.serialize({
+				type = "msg",
+				content =
+				"Iris closed! Identification Required"
+			})) -- Send through the gate to the other side, if possible
 		end
 
 		if address then
@@ -111,8 +114,6 @@ end
 function listenStargateOutgoingWormhole() -- "stargate_outgoing_wormhole"
 	while true do
 		local name, periphName, address = os.pullEvent("stargate_outgoing_wormhole")
-
-
 
 		CreateDisplayLink.UpdateDisplay({ content = "Outgoing Wormhole", xPos = 7 },
 			{ content = stargate.addressToString(address), xPos = 7 })
@@ -139,7 +140,8 @@ function listenStargateReset() -- "stargate_reset"
 		activeAddress = { display = "Not Connected", address = "" }
 		warning = ""
 
-		CreateDisplayLink.UpdateDisplay({ content = "Stargate Idle", xPos = 10 }, { content = "Not Connected", xPos = 10 })
+		CreateDisplayLink.UpdateDisplay({ content = "Stargate Idle", xPos = 10 },
+			{ content = "Not Connected", xPos = 10 })
 		RedstoneRelay.SetOutput(true) -- Toggle alarms and sirens
 
 		chevronTable = {
@@ -187,11 +189,13 @@ function listenStargateMessageRecieved() -- "stargate_message_received"
 		msgTable = textutils.unserialize(msg)
 
 		if msgTable then
-			-- if (msgTable.type and msgTable.command) and (msgTable.type == "call" and msgTable.command == "info") then
-			-- 	stargate.sendStargateMessage(textutils.serialize({
-			-- 		isIrisClosed = stargate.getIrisProgress() ~= 0
-			-- 	}))
-			-- end
+			if (msgTable.type and msgTable.command) and (msgTable.type == "call" and msgTable.command == "info") then
+				stargate.sendStargateMessage(textutils.serialize({
+					isIrisClosed = stargate.getIrisProgress() ~= 0
+				}))
+			elseif msgTable.type == "msg" then
+				Helpers.log("Message Recieved: " .. msgTable.content)
+			end
 		end
 	end
 end
@@ -205,16 +209,27 @@ end
 
 function listenDialStargate()
 	while true do
-		local event, address, isFast = os.pullEvent("dial_stargate")
+		local event, address, isFast, arguments = os.pullEvent("dial_stargate")
 
 		activeAddress = AddressBook.getAddressFromIDOrAddress(address)
 
-		if activeAddress.security.restricted == true then
-			Helpers.log("Address restricted. Aborting dial sequence")
-		else
-			CreateDisplayLink.UpdateDisplay({ content = "Dialing", xPos = 13 }, { content = address, xPos = 7 })
-			dialStargate(AddressBook.stringToTable(address), isFast)
+		for k, v in pairs(arguments) do
+			print(k, v, Helpers.tableContains(arguments, "-f"))
 		end
+
+		if activeAddress.security.restricted == true then
+			if not Helpers.tableContains(arguments, "-f") then
+				Helpers.log("Address restricted. Aborting dial sequence")
+				goto skipDialing
+			else
+				warning = "Dialing Restricted Address!"
+			end
+		end
+
+		CreateDisplayLink.UpdateDisplay({ content = "Dialing", xPos = 13 }, { content = address, xPos = 7 })
+		dialStargate(AddressBook.stringToTable(activeAddress.address), isFast)
+
+		::skipDialing::
 	end
 end
 
@@ -226,8 +241,8 @@ function dataUpdater()
 
 		if stargate == nil then
 			stargate = peripheral.find("advanced_crystal_interface")
-			or peripheral.find("crystal_interface")
-			or peripheral.find("basic_interface")
+				or peripheral.find("crystal_interface")
+				or peripheral.find("basic_interface")
 		end
 
 		if stargate then
@@ -354,7 +369,8 @@ function dialStargate(addArr, isFast)
 
 	if stargate == nil then
 		Helpers.log("Dial sequence aborted: No Stargate Found")
-		CreateDisplayLink.UpdateDisplay({ content = "Stargate Idle", xPos = 10 }, { content = "Not Connected", xPos = 10 })
+		CreateDisplayLink.UpdateDisplay({ content = "Stargate Idle", xPos = 10 },
+			{ content = "Not Connected", xPos = 10 })
 	else
 		if stargate.rotateClockwise ~= nil and stargate.getCurrentSymbol ~= nil then
 			lastSymbol = stargate.getCurrentSymbol()
@@ -473,10 +489,13 @@ function stargateStatus()
 					return "Wormhole forming"
 				end
 			end
-		elseif stargate.getChevronsEngaged() or 0 > 0 then
-			return "Dialing"
 		else
-			return "Idle"
+			local feedbackCode, feedbackMessage = stargate.getRecentFeedback()
+			if (stargate.getChevronsEngaged() or 0) > 0 or (feedbackCode == 12 or feedbackCode == 13) then
+				return "Dialing"
+			else
+				return "Idle"
+			end
 		end
 	else
 		return "N/A"

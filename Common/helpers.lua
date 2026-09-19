@@ -76,6 +76,7 @@ function roundDecimal(number, decimals)
 	return math.floor(number * multiplier) / multiplier
 end
 
+-- Converts minecraft ticks to a mm:ss string
 function ticksToMinutesSeconds(ticks)
 	if ticks == nil then
 		return nil
@@ -109,9 +110,7 @@ function convertToPowerUnits(powerAmount)
 	return string.format("%s%sFE", roundDecimal(powerAmount, 2), Energy_suffixes[timesConverted])
 end
 
--- Gets the Address Book from the config file
-
-
+-- Logs a message to the server console, and transmits the message to any available client to display in the terminal console
 function log(msg)
 	if InstanceType == "server" then
 		print(msg)
@@ -124,12 +123,24 @@ function log(msg)
 	end
 end
 
+function tableContains(table, objectToFind)
+	for k,v in pairs(table) do
+		if v == objectToFind then
+			return true
+		end
+	end
+
+	return false
+end
+
 return {
 	resetTerminal = resetTerminal,
 	roundDecimal = roundDecimal,
 	ticksToMinutesSeconds = ticksToMinutesSeconds,
 	convertToPowerUnits = convertToPowerUnits,
 	log = log,
+	tableContains = tableContains,
+	
 	GateFeedbackCodes = GateFeedbackCodes,
 	GateGeneration = GateGeneration,
 	FilterType = FilterType

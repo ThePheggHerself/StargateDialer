@@ -1,5 +1,3 @@
-
-
 function listenBasaltCommand()
 	while true do
 		local name, cmd = os.pullEvent("basalt_command")
@@ -24,23 +22,25 @@ function listenConsoleLogRequest()
 	while true do
 		local name, msg = os.pullEvent("console_log_request")
 
-		local lines = Strings.wrap(msg:gsub("%[cmd%]", ">"), TerminalUI.ConsoleFrame.width - 2)
+		if msg ~= nil then
+			local lines = Strings.wrap(msg:gsub("%[cmd%]", ">"), TerminalUI.ConsoleFrame.width - 2)
 
-		for _, line in pairs(lines) do
-			TerminalUI.ConsoleFrame:addChild(TerminalUI.ConsoleFrame:addLabel({
-				y = TerminalUI.Index,
-				height = 1,
-				text = line
-			}))	
+			for _, line in pairs(lines) do
+				TerminalUI.ConsoleFrame:addChild(TerminalUI.ConsoleFrame:addLabel({
+					y = TerminalUI.Index,
+					height = 1,
+					text = line
+				}))
 
-			TerminalUI.Index = TerminalUI.Index + 1
-		end
+				TerminalUI.Index = TerminalUI.Index + 1
+			end
 
-		if TerminalUI.Index > 13 then
-			Basalt.schedule(function ()
-				sleep(0.1)
-				TerminalUI.ConsoleFrame:scrollTo(0, TerminalUI.Index - 13)
-			end)
+			if TerminalUI.Index > 13 then
+				Basalt.schedule(function()
+					sleep(0.1)
+					TerminalUI.ConsoleFrame:scrollTo(0, TerminalUI.Index - 13)
+				end)
+			end
 		end
 	end
 end
@@ -56,7 +56,6 @@ function listenInput()
 	end
 end
 
-
 function startInterfaces()
 	Basalt.run()
 end
@@ -64,8 +63,8 @@ end
 function run()
 	TerminalInterface.createInterface()
 	MonitorInterface.createInterface()
-	
-	
+
+
 	Helpers.log("Welcome to the BasaltDialer Terminal")
 
 	parallel.waitForAny(
@@ -79,5 +78,5 @@ function run()
 end
 
 return {
-    run = run
+	run = run
 }

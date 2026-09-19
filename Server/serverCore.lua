@@ -3,9 +3,15 @@ local commands = {
 		name = "dial",
 		alias = { "fdial" },
 		description = "Requests the stargate to dial an address",
-		func=(function (cmdTable)
-			Helpers.log("Dialing: " .. cmdTable[2])
-			os.queueEvent("dial_stargate", cmdTable[2], cmdTable[1] == "fdial")
+		func = (function(cmdTable)
+			if #cmdTable > 1 then
+				local cmd = table.remove(cmdTable, 1)
+				local address = table.remove(cmdTable, 1)
+
+				os.queueEvent("dial_stargate", address, cmd == "fdial", cmdTable)
+			else
+				Helpers.log("Invalid Command")
+			end
 		end)
 	},
 	{
@@ -19,7 +25,7 @@ local commands = {
 	{
 		name = "iris",
 		description = "Manage the stargate's iris",
-		func = (function (cmdTable)
+		func = (function(cmdTable)
 			if cmdTable[2] == "open" then
 				SGHandler.toggleIris(true)
 			elseif cmdTable[2] == "close" then
@@ -54,14 +60,17 @@ local commands = {
 	},
 	{
 		name = "cmd",
-		alias = {"transmit", "msg"},
+		alias = { "transmit", "msg" },
 		description = "Sends a message through an active stargate",
-		func = (function (cmdTable)
+		func = (function(cmdTable)
 			if not SGHandler.stargate.isWormholeOpen() then
 				Helpers.log("There must be an active connection in order to send a message")
 			end
-	
-			SGHandler.stargate.sendStargateMessage(table.concat(cmdTable, " ", 2))
+
+			Helpers.log("Transmitting Message")
+
+			SGHandler.stargate.sendStargateMessage(textutils.serialize({ type = "msg", content = table.concat(cmdTable,
+				" ", 2) }))
 		end)
 	},
 	{
@@ -71,13 +80,13 @@ local commands = {
 		func = (function(cmdTable)
 			if cmdTable[2] == "show" and cmdTable[3] ~= nil then
 				local address = AddressBook.getAddressFromIDOrAddress(cmdTable[3])
-	
+
 				if address then
 					Helpers.log(string.format("Address for %s: %s", address.display, address.address))
 				else
 					Helpers.log("No address found for " .. cmdTable[3])
 				end
-			elseif cmdTable[2] == "del"  and cmdTable[3] ~= nil then
+			elseif cmdTable[2] == "del" and cmdTable[3] ~= nil then
 				AddressBook.removeAddress(cmdTable[3])
 			end
 		end)
@@ -85,7 +94,7 @@ local commands = {
 	{
 		name = "share",
 		description = "Share an address in chat",
-		func = (function (cmdTable)
+		func = (function(cmdTable)
 			if cmdTable[2] ~= nil then
 				local shareAddress = AddressBook.getAddressFromIDOrAddress(cmdTable[2])
 				if shareAddress.display ~= nil then
@@ -98,10 +107,10 @@ local commands = {
 
 
 function listenRequestCommand()
-    while true do
-        local event, command = os.pullEvent("request_command")
+	while true do
+		local event, command = os.pullEvent("request_command")
 		commandHandler(command)
-    end
+	end
 end
 
 function commandHandler(cmd)
@@ -127,7 +136,7 @@ function commandHandler(cmd)
 				end
 			end
 		end
-	end	
+	end
 end
 
 function startInterfaces()
@@ -137,10 +146,10 @@ end
 function run()
 	Helpers.resetTerminal()
 	print("Server started")
-    SGHandler.runListeners()
+	SGHandler.runListeners()
 end
 
 return {
-    run = run,
-    listenRequestCommand = listenRequestCommand
+	run = run,
+	listenRequestCommand = listenRequestCommand
 }
