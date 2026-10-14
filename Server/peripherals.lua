@@ -51,7 +51,7 @@ RedstoneRelay = {
     Relays = { peripheral.find("redstone_relay") },
     SetOutput = function (outputState)
         if #RedstoneRelay.Relays > 0 then
-            for _, relay in pairs(outputState) do
+            for _, relay in pairs(RedstoneRelay.Relays) do
                 relay.setOutput("top", outputState)
                 relay.setOutput("bottom", outputState)
                 relay.setOutput("front", outputState)

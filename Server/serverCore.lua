@@ -102,6 +102,20 @@ local commands = {
 				end
 			end
 		end)
+	},
+	{
+		name = "alarms",
+		alias = { "togglealarms" },
+		description = "Toggle the alarms on or off",
+		func = (function (cmdTable)
+			if cmdTable[2] ~= nil then
+				if cmdTable[2] == "true" then
+					RedstoneRelay.SetOutput(true)
+				else
+					RedstoneRelay.SetOutput(false)
+				end
+			end
+		end)
 	}
 }
 

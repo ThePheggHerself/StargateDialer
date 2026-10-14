@@ -21,16 +21,8 @@ local chevronTable = {
 
 function listenStargateChevronEngaged() -- "stargate_chevron_engaged"
 	while true do
-		local name, periphName, chevronCount, engagedChevron, incomingConnection, encodedSymbol =
-			os.pullEvent("stargate_chevron_engaged")
-		if incomingConnection and engagedChevron == 1 then -- Start of an incoming connection
-			Helpers.log("WARNING! Incoming Connection!")
-			warning = "Offworld Activation!"
-
-			toggleIris(false)
-			RedstoneRelay.SetOutput(true) -- Toggle alarms and sirens
-		end
-
+		local name, periphName, chevronCount, engagedChevron, incomingConnection, encodedSymbol = os.pullEvent("stargate_chevron_engaged")
+		
 		chevronText = "Encoded"
 
 		if (incomingConnection and isAdvancedInterface(peripheral.getType(periphName))) or not incomingConnection then
@@ -48,6 +40,13 @@ function listenStargateIncomingConnection() -- "stargate_incoming_connection"
 
 		CreateDisplayLink.UpdateDisplay({ content = "WARNING", xPos = 13 }, { content = "Incoming Connection", xPos = 7 })
 		ChatBox.SendToast("Offworld Activation")
+
+		Helpers.log("WARNING! Incoming Connection!")
+			warning = "Offworld Activation!"
+
+			toggleIris(false)
+			RedstoneRelay.SetOutput(true) -- Toggle alarms and sirens
+
 	end
 end
 
@@ -142,7 +141,7 @@ function listenStargateReset() -- "stargate_reset"
 
 		CreateDisplayLink.UpdateDisplay({ content = "Stargate Idle", xPos = 10 },
 			{ content = "Not Connected", xPos = 10 })
-		RedstoneRelay.SetOutput(true) -- Toggle alarms and sirens
+		RedstoneRelay.SetOutput(false) -- Toggle alarms and sirens
 
 		chevronTable = {
 			[1] = "idle",
